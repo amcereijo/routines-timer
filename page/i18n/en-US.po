@@ -1,0 +1,82 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0.0\n"
+"Language: en-US\n"
+
+msgid "appName"
+msgstr "Routine Timer"
+
+msgid "home_title"
+msgstr "Routine Timer"
+
+msgid "home_new_routine"
+msgstr "New Routine"
+
+msgid "home_saved"
+msgstr "Saved"
+
+msgid "create_title"
+msgstr "New Routine"
+
+msgid "create_routine_name"
+msgstr "Routine name"
+
+msgid "name_input_title_step"
+msgstr "Step name"
+
+msgid "name_input_title_routine"
+msgstr "Routine name"
+
+msgid "create_add_step"
+msgstr "Add Step"
+
+msgid "create_start"
+msgstr "START"
+
+msgid "create_save"
+msgstr "SAVE"
+
+msgid "step_label"
+msgstr "Step"
+
+msgid "picker_title"
+msgstr "Step duration"
+
+msgid "picker_min"
+msgstr "min"
+
+msgid "picker_sec"
+msgstr "sec"
+
+msgid "saved_title"
+msgstr "Saved Routines"
+
+msgid "saved_routine_fallback"
+msgstr "Routine"
+
+msgid "saved_empty"
+msgstr "No saved routines"
+
+msgid "saved_empty_hint"
+msgstr "Create a routine and press SAVE"
+
+msgid "steps_count"
+msgstr "steps"
+
+msgid "run_pause"
+msgstr "PAUSE"
+
+msgid "run_resume"
+msgstr "RESUME"
+
+msgid "run_stop"
+msgstr "STOP"
+
+msgid "done_title"
+msgstr "DONE!"
+
+msgid "done_text"
+msgstr "All steps completed"
+
+msgid "done_ok"
+msgstr "OK"

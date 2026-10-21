@@ -1,0 +1,54 @@
+{
+  "configVersion": "v3",
+  "app": {
+    "appId": 1099001,
+    "appName": "Routine Timer",
+    "appType": "app",
+    "version": {
+      "code": 1,
+      "name": "1.0.0"
+    },
+    "icon": "icon.png",
+    "vender": "angel",
+    "description": "Create, save and run sequences of timers with pause/stop control."
+  },
+  "runtime": {
+    "apiVersion": {
+      "compatible": "3.0",
+      "target": "3.7",
+      "minVersion": "3.0"
+    }
+  },
+  "targets": {
+    "balance": {
+      "module": {
+        "page": {
+          "pages": [
+            "page/home",
+            "page/create",
+            "page/saved",
+            "page/run"
+          ]
+        }
+      },
+      "platforms": [
+        {
+          "st": "r",
+          "dw": 480
+        }
+      ],
+      "designWidth": 480
+    }
+  },
+  "i18n": {
+    "en-US": {
+      "appName": "Routine Timer"
+    },
+    "es-ES": {
+      "appName": "Rutinas Timer"
+    }
+  },
+  "permissions": ["device:os.local_storage"],
+  "defaultLanguage": "en-US",
+  "debug": false
+}
