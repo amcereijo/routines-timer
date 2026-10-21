@@ -31,9 +31,25 @@ const WHEEL_H = 62
 const WHEEL_Y = 168
 
 Page({
-  onInit() {
+  onInit(params) {
     this.steps = []
     this.routineName = ''
+    this.editId = null
+    try {
+      const data = typeof params === 'string' ? JSON.parse(params) : params
+      if (data && data.edit) {
+        // Editing an existing routine
+        this.routineName = data.edit.name || ''
+        this.editId = data.edit.id != null ? data.edit.id : null
+        if (Array.isArray(data.edit.steps)) {
+          // Deep copy so we never mutate the stored object before saving
+          this.steps = data.edit.steps.map((s) => ({
+            seconds: s.seconds,
+            name: s.name || '',
+          }))
+        }
+      }
+    } catch (e) {}
     this.listWidgets = []
     this.pickerWidgets = []
     this.pickerCtx = null
@@ -60,7 +76,7 @@ Page({
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text_style: text_style.NONE,
-      text: getText('create_title'),
+      text: this.editId != null ? getText('create_title_edit') : getText('create_title'),
     })
 
     // Routine name row
@@ -138,9 +154,10 @@ Page({
       press_color: 0x0288d1,
       click_func: () => {
         if (this.steps.length === 0) return
-        addRoutine(this.routineName, this.steps)
+        addRoutine(this.routineName, this.steps, this.editId)
         this.steps = []
         this.routineName = ''
+        this.editId = null
         this.listOffset = 0
         this.refreshRoutineName()
         this.refreshList()

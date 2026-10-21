@@ -110,11 +110,11 @@ Page({
       const runBtn = createWidget(widget.BUTTON, {
         x: 40,
         y,
-        w: 312,
+        w: 238,
         h: ROW_H,
         radius: 16,
         text: label,
-        text_size: 22,
+        text_size: 20,
         normal_color: COLOR_ACCENT,
         press_color: 0x0288d1,
         click_func: () => {
@@ -125,10 +125,30 @@ Page({
         },
       })
 
-      const del = createWidget(widget.BUTTON, {
-        x: 360,
+      const editBtn = createWidget(widget.BUTTON, {
+        x: 286,
         y: y + 6,
-        w: 80,
+        w: 76,
+        h: ROW_H - 12,
+        radius: 12,
+        text: '✎',
+        text_size: 24,
+        normal_color: COLOR_DARK_BTN,
+        press_color: COLOR_DARK_BTN_PRESS,
+        click_func: () => {
+          push({
+            url: 'page/create',
+            params: JSON.stringify({
+              edit: { id: routine.id, name: routine.name || '', steps: routine.steps },
+            }),
+          })
+        },
+      })
+
+      const del = createWidget(widget.BUTTON, {
+        x: 370,
+        y: y + 6,
+        w: 70,
         h: ROW_H - 12,
         radius: 12,
         text: '×',
@@ -142,7 +162,7 @@ Page({
         },
       })
 
-      this.listWidgets.push(runBtn, del)
+      this.listWidgets.push(runBtn, editBtn, del)
     }
 
     // Scroll arrows

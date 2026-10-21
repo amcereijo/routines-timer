@@ -18,6 +18,9 @@ msgstr "Saved"
 msgid "create_title"
 msgstr "New Routine"
 
+msgid "create_title_edit"
+msgstr "Edit Routine"
+
 msgid "create_routine_name"
 msgstr "Routine name"
 

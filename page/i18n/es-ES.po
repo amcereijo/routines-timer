@@ -18,6 +18,9 @@ msgstr "Guardadas"
 msgid "create_title"
 msgstr "Nueva Rutina"
 
+msgid "create_title_edit"
+msgstr "Editar Rutina"
+
 msgid "create_routine_name"
 msgstr "Nombre de la rutina"
 

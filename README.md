@@ -19,11 +19,11 @@ until all complete. You can pause/resume or stop at any time.
 ┌──────────────┐                         │ push        │ save & push
 │    SAVED     │   tap routine           ▼             ▼
 │  routines    │ ────────────────▶ ┌──────────────────────────┐
-│  (run / ×)   │                   │           RUN            │
-└──────────────┘                   │  Step n/N  next-step →   │
-                                   │  big countdown + bar     │
-                                   │  [PAUSE/RESUME] [STOP]   │
-                                   └───────────┬──────────────┘
+│  (run/✎/×)   │                   │           RUN            │
+└──────┬───────┘                   │  Step n/N  next-step →   │
+       │ ✎ edit                    │  big countdown + bar     │
+       └──────────▶ CREATE ◀────── │  [PAUSE/RESUME] [STOP]   │
+                     (prefilled)   └───────────┬──────────────┘
                                                │ all steps done
                                                ▼
                                         "DONE!" → OK → back
@@ -47,6 +47,10 @@ until all complete. You can pause/resume or stop at any time.
    name (max 10; when full, the oldest is dropped; saving again with the same
    name overwrites the previous one).
 4. **Run a saved routine**: Home → **Saved** → tap the routine.
+   - **✎** loads the routine back into the editor (title shows
+     "Edit Routine"); pressing **SAVE** updates it in place, keeping its
+     position in the list. Leaving with the back gesture discards changes.
+   - **×** deletes the routine.
 5. **While running**
    - The watch shows the routine name, `n/N · step name`, the remaining time,
      a progress bar (turns red in the last 5 s) and the next step.

@@ -29,11 +29,26 @@ export function getSavedRoutines() {
 }
 
 /**
- * Add (or overwrite when a routine with the same name exists) a routine.
- * Returns true when an existing routine was overwritten.
+ * Add a routine. When `editId` matches an existing routine id, that routine
+ * is updated in place (keeping its position in the list). As a convenience,
+ * when no editId is given but the name matches an existing routine, that
+ * routine is overwritten instead.
+ * Returns true when an existing routine was overwritten/updated.
  */
-export function addRoutine(name, steps) {
+export function addRoutine(name, steps, editId) {
   const list = readAll()
+
+  // Update in place
+  if (editId != null) {
+    const idx = list.findIndex((r) => r.id === editId)
+    if (idx >= 0) {
+      list[idx] = { id: editId, name: name || '', steps }
+      writeAll(list)
+      return true
+    }
+  }
+
+  // Overwrite by name
   const existing = name ? list.findIndex((r) => r.name === name) : -1
   let overwritten = false
   if (existing >= 0) {
