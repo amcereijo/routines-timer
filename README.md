@@ -129,7 +129,8 @@ utils/
 
 - **Node.js 24+ recommended** (or Node 18/20 with extra patches, see below)
 - A Zepp developer account: https://dev.zepp.com/
-- The Zepp app on your phone with the Balance paired (for on-device preview)
+- The Zepp app on your phone with the Balance paired, with **Developer Mode**
+  enabled (see "Installing on the watch" below)
 
 ```sh
 npm install
@@ -181,8 +182,28 @@ manually with `sh scripts/postinstall.sh`.
 Nothing here affects the produced `.zab` — these are issues in the build tool
 only, not in the app code.
 
-### Installing on the watch
+### Installing on the watch (Zepp App Developer Mode)
 
-The `.zab` in `dist/` is installed via `zeus preview` (developer mode) or
-through the Zepp developer console. See
-https://docs.zepp.com/docs/guides/tools/ for details.
+The easiest way to run the app on your real watch is the **Developer Mode**
+built into the Zepp phone app — no store submission needed.
+
+1. **Enable Developer Mode** in the Zepp app on your phone:
+   - Go to **Profile → Settings → About** and tap the **Zepp icon 7 times**
+     in a row until the pop-up appears.
+2. **Preview on the watch**: run `npx zeus preview` in this project — it
+   builds and shows a **QR code**. In the Zepp app, use the Developer Mode
+   **Scan** function to scan it; the app installs and launches on your
+   paired Balance.
+3. Developer Mode also gives you:
+   - **Watch screenshots** (saved to your phone's gallery)
+   - **Real-device logs** (Device App / Side Service log viewer — handy for
+     debugging this app)
+   - **Bridge mode** for live development
+   - **Device API_LEVEL lookup** (Device information button)
+
+Full instructions:
+https://docs.zepp.com/docs/guides/tools/zepp-app/
+
+Alternatively, the `.zab` produced in `dist/` can be distributed through the
+Zepp developer console. See https://docs.zepp.com/docs/guides/tools/ for
+details.
