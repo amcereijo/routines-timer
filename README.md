@@ -54,7 +54,17 @@ until all complete. You can pause/resume or stop at any time.
 5. **While running**
    - The watch shows the routine name, `n/N · step name`, the remaining time,
      a progress bar (turns red in the last 5 s) and the next step.
-   - The watch **vibrates** at every step change and when the routine ends.
+   - Alerts while running (see `utils/alerts.js`):
+     - **Last 3 s of each step**: one short vibration + one soft sound per
+       second.
+     - **Step ends**: single long vibration + double sound.
+     - **Routine ends**: triple long vibration + triple long sound.
+     - Sounds use `SystemSounds` (API_LEVEL 3.6+; soft `MESSAGE` ding for the
+       warnings, `ALARM` with repeats for step/routine end) and are skipped
+       silently when the device has system sounds disabled or is on an older
+       API level. Vibration uses the API 3.6 action-array form
+       (`CONTINUOUS`/`PAUSE` with durations) and falls back to the fixed
+       `VIBRATOR_SCENE_*` modes on older firmware.
    - The screen **stays on** during the run.
    - **PAUSE** freezes the countdown (button becomes **RESUME**);
      **STOP** aborts and returns to the previous screen.
@@ -107,6 +117,7 @@ utils/
   storage.js            Saved-routine persistence
   textInput.js          Text input: system keyboard w/ mini-keyboard fallback
   keyboard.js           Built-in mini keyboard overlay (API 3.x devices)
+  alerts.js             Vibration + sound feedback for step/routine end
 ```
 
 ### Tech notes
@@ -117,8 +128,8 @@ utils/
   paused, so pause is trivially correct.
 - Screen-on during runs: `setPageBrightTime` + `pauseDropWristScreenOff`
   from `@zos/display`; restored in `onDestroy` via `resetDropWristScreenOff`.
-- Step-change/finish feedback: `Vibrator` with `VIBRATOR_SCENE_DURATION`
-  from `@zos/sensor`.
+- End-of-step/routine feedback: `Vibrator` + `SystemSounds` from
+  `@zos/sensor`, centralized in `utils/alerts.js` (patterns described above).
 - Page lifecycle: Zepp OS destroys the page on `push` and re-runs
   `onInit`+`build` on `back`, so each page always renders fresh state
   (no stale saved lists).

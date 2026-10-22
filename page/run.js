@@ -8,7 +8,6 @@ import {
 } from '@zos/ui'
 import { back } from '@zos/router'
 import { getText } from '@zos/i18n'
-import { Vibrator, VIBRATOR_SCENE_DURATION } from '@zos/sensor'
 import {
   setPageBrightTime,
   pauseDropWristScreenOff,
@@ -25,6 +24,13 @@ import {
   COLOR_SUBTEXT,
 } from '../utils/constants'
 import { formatDuration } from '../utils/format'
+import {
+  initAlerts,
+  destroyAlerts,
+  alertStepWarning,
+  alertStepEnd,
+  alertRoutineDone,
+} from '../utils/alerts'
 
 Page({
   onInit(params) {
@@ -40,7 +46,7 @@ Page({
     this.remaining = 0
     this.paused = false
     this.tickTimer = null
-    this.vibrator = new Vibrator()
+    initAlerts()
 
     this.widgets = {}
     this.doneWidgets = []
@@ -48,9 +54,7 @@ Page({
 
   onDestroy() {
     this.stopTick()
-    try {
-      this.vibrator.stop()
-    } catch (e) {}
+    destroyAlerts()
     // Restore default screen-off behavior (the bright-time setting resets
     // automatically when the page is destroyed)
     try {
@@ -172,7 +176,6 @@ Page({
     this.paused = false
     this.updatePauseLabel()
     this.updateUI()
-    this.notifyStepChange()
     this.startTick()
   },
 
@@ -185,6 +188,8 @@ Page({
         this.remaining = 0
         this.updateUI()
         this.stopTick()
+        // Single long vibration + double sound for the step that just ended
+        alertStepEnd()
         if (this.currentIdx < this.steps.length - 1) {
           this.startStep(this.currentIdx + 1)
         } else {
@@ -192,6 +197,8 @@ Page({
         }
         return
       }
+      // Last 3 seconds of the step: single vibration + single soft sound
+      if (this.remaining <= 3) alertStepWarning()
       this.updateUI()
     }, 1000)
   },
@@ -254,20 +261,9 @@ Page({
     back()
   },
 
-  notifyStepChange() {
-    try {
-      this.vibrator.stop()
-      this.vibrator.setMode({ mode: VIBRATOR_SCENE_DURATION })
-      this.vibrator.start()
-    } catch (e) {}
-  },
-
   onFinished() {
-    try {
-      this.vibrator.stop()
-      this.vibrator.setMode({ mode: VIBRATOR_SCENE_DURATION })
-      this.vibrator.start()
-    } catch (e) {}
+    // Triple long vibration + triple long sound for the whole routine
+    alertRoutineDone()
 
     // Hide running widgets
     ;[
