@@ -69,37 +69,37 @@ Page({
     setPageBrightTime({ brightTime: 3600000 })
     pauseDropWristScreenOff({ duration: 0 })
 
-    this.widgets.stepText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 52,
-      w: DEVICE_WIDTH,
-      h: 40,
-      color: COLOR_SUBTEXT,
-      text_size: 26,
-      align_h: align.CENTER_H,
-      align_v: align.CENTER_V,
-      text: '',
-    })
-
     this.widgets.routineText = createWidget(widget.TEXT, {
       x: 0,
-      y: 20,
+      y: 22,
       w: DEVICE_WIDTH,
-      h: 30,
+      h: 34,
       color: COLOR_ACCENT,
-      text_size: 20,
+      text_size: 24,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: this.routineName || '',
     })
 
+    this.widgets.stepText = createWidget(widget.TEXT, {
+      x: 0,
+      y: 60,
+      w: DEVICE_WIDTH,
+      h: 44,
+      color: COLOR_SUBTEXT,
+      text_size: 30,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: '',
+    })
+
     this.widgets.nextText = createWidget(widget.TEXT, {
       x: 0,
-      y: 96,
+      y: 108,
       w: DEVICE_WIDTH,
       h: 34,
       color: COLOR_SUBTEXT,
-      text_size: 22,
+      text_size: 24,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
@@ -107,11 +107,11 @@ Page({
 
     this.widgets.timeText = createWidget(widget.TEXT, {
       x: 0,
-      y: 136,
+      y: 146,
       w: DEVICE_WIDTH,
-      h: 120,
+      h: 130,
       color: 0xffffff,
-      text_size: 110,
+      text_size: 120,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text_style: text_style.NONE,
@@ -119,31 +119,31 @@ Page({
     })
 
     this.widgets.barBg = createWidget(widget.FILL_RECT, {
-      x: 70,
-      y: 290,
-      w: 340,
-      h: 12,
-      radius: 6,
+      x: 60,
+      y: 300,
+      w: 360,
+      h: 16,
+      radius: 8,
       color: 0x1c1c1c,
     })
 
     this.widgets.barFill = createWidget(widget.FILL_RECT, {
-      x: 70,
-      y: 290,
-      w: 340,
-      h: 12,
-      radius: 6,
+      x: 60,
+      y: 300,
+      w: 360,
+      h: 16,
+      radius: 8,
       color: COLOR_ACCENT,
     })
 
     this.widgets.pauseBtn = createWidget(widget.BUTTON, {
       x: 40,
-      y: 352,
+      y: 356,
       w: 190,
-      h: 76,
-      radius: 38,
+      h: 84,
+      radius: 42,
       text: getText('run_pause'),
-      text_size: 26,
+      text_size: 28,
       normal_color: COLOR_ORANGE,
       press_color: 0xc67000,
       click_func: () => this.togglePause(),
@@ -151,12 +151,12 @@ Page({
 
     this.widgets.stopBtn = createWidget(widget.BUTTON, {
       x: 250,
-      y: 352,
+      y: 356,
       w: 190,
-      h: 76,
-      radius: 38,
+      h: 84,
+      radius: 42,
       text: getText('run_stop'),
-      text_size: 26,
+      text_size: 28,
       normal_color: COLOR_RED,
       press_color: 0xb9004e,
       click_func: () => this.stopAll(),
@@ -233,13 +233,13 @@ Page({
     this.widgets.timeText.setProperty(prop.TEXT, formatDuration(this.remaining))
 
     const frac = total > 0 ? this.remaining / total : 0
-    const w = Math.max(0, Math.round(340 * frac))
+    const w = Math.max(0, Math.round(360 * frac))
     this.widgets.barFill.setProperty(prop.MORE, {
-      x: 70,
-      y: 290,
+      x: 60,
+      y: 300,
       w,
-      h: 12,
-      radius: 6,
+      h: 16,
+      radius: 8,
       color: this.remaining <= 5 ? COLOR_RED : COLOR_ACCENT,
     })
   },
@@ -284,34 +284,34 @@ Page({
     this.doneWidgets = [
       createWidget(widget.TEXT, {
         x: 0,
-        y: 130,
+        y: 120,
         w: DEVICE_WIDTH,
-        h: 80,
+        h: 96,
         color: COLOR_GREEN,
-        text_size: 60,
+        text_size: 72,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('done_title'),
       }),
       createWidget(widget.TEXT, {
         x: 0,
-        y: 220,
+        y: 228,
         w: DEVICE_WIDTH,
-        h: 44,
+        h: 48,
         color: 0xffffff,
-        text_size: 26,
+        text_size: 30,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('done_text'),
       }),
       createWidget(widget.BUTTON, {
-        x: 140,
-        y: 320,
-        w: 200,
-        h: 72,
-        radius: 36,
+        x: 120,
+        y: 330,
+        w: 240,
+        h: 88,
+        radius: 44,
         text: getText('done_ok'),
-        text_size: 28,
+        text_size: 32,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => back(),

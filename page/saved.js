@@ -10,6 +10,7 @@ import { getText } from '@zos/i18n'
 import {
   DEVICE_WIDTH,
   COLOR_ACCENT,
+  COLOR_GREEN,
   COLOR_DARK_BTN,
   COLOR_DARK_BTN_PRESS,
   COLOR_SUBTEXT,
@@ -32,11 +33,11 @@ Page({
   build() {
     createWidget(widget.TEXT, {
       x: 0,
-      y: 24,
+      y: 28,
       w: DEVICE_WIDTH,
-      h: 44,
+      h: 48,
       color: 0xffffff,
-      text_size: 30,
+      text_size: 32,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text_style: text_style.NONE,
@@ -59,31 +60,31 @@ Page({
   refreshList() {
     this.clearListWidgets()
 
-    const AREA_TOP = 84
-    const ROW_H = 66
-    const ROW_GAP = 12
-    const VISIBLE = 3
+    const AREA_TOP = 92
+    const ROW_H = 128
+    const ROW_GAP = 16
+    const VISIBLE = 2
 
     if (this.routines.length === 0) {
       this.listWidgets.push(
         createWidget(widget.TEXT, {
           x: 0,
-          y: 190,
+          y: 200,
           w: DEVICE_WIDTH,
-          h: 44,
+          h: 48,
           color: COLOR_SUBTEXT,
-          text_size: 26,
+          text_size: 30,
           align_h: align.CENTER_H,
           align_v: align.CENTER_V,
           text: getText('saved_empty'),
         }),
         createWidget(widget.TEXT, {
           x: 0,
-          y: 236,
+          y: 252,
           w: DEVICE_WIDTH,
           h: 40,
           color: COLOR_SUBTEXT,
-          text_size: 20,
+          text_size: 24,
           align_h: align.CENTER_H,
           align_v: align.CENTER_V,
           text: getText('saved_empty_hint'),
@@ -103,20 +104,65 @@ Page({
 
       const routineName =
         (routine.name && routine.name.trim()) || `${getText('saved_routine_fallback')} ${i + 1}`
-      const label = `${routineName} · ${routine.steps.length} ${getText('steps_count')} · ${formatDuration(
+      const info = `${routine.steps.length} ${getText('steps_count')} · ${formatDuration(
         totalSeconds(routine.steps)
       )}`
 
-      const runBtn = createWidget(widget.BUTTON, {
+      // Line 1: routine name (tappable to run)
+      const nameBtn = createWidget(widget.BUTTON, {
         x: 40,
         y,
-        w: 238,
-        h: ROW_H,
-        radius: 16,
-        text: label,
+        w: 400,
+        h: 62,
+        radius: 14,
+        normal_color: 0x141414,
+        press_color: 0x2a2a2a,
+        click_func: () => {
+          push({
+            url: 'page/run',
+            params: JSON.stringify({ name: routine.name || '', steps: routine.steps }),
+          })
+        },
+      })
+
+      const nameLabel = createWidget(widget.TEXT, {
+        x: 56,
+        y: y + 4,
+        w: 368,
+        h: 32,
+        color: 0xffffff,
+        text_size: 26,
+        align_h: align.LEFT,
+        align_v: align.CENTER_V,
+        text: routineName,
+      })
+      nameLabel.setEnable(false)
+
+      const infoLabel = createWidget(widget.TEXT, {
+        x: 56,
+        y: y + 32,
+        w: 368,
+        h: 26,
+        color: COLOR_SUBTEXT,
         text_size: 20,
-        normal_color: COLOR_ACCENT,
-        press_color: 0x0288d1,
+        align_h: align.LEFT,
+        align_v: align.CENTER_V,
+        text: info,
+      })
+      infoLabel.setEnable(false)
+
+      // Line 2: action buttons (run / edit / delete) with text labels
+      const btnY = y + 68
+      const runBtn = createWidget(widget.BUTTON, {
+        x: 40,
+        y: btnY,
+        w: 165,
+        h: 52,
+        radius: 26,
+        text: `▶ ${getText('saved_run')}`,
+        text_size: 24,
+        normal_color: COLOR_GREEN,
+        press_color: 0x009624,
         click_func: () => {
           push({
             url: 'page/run',
@@ -126,15 +172,15 @@ Page({
       })
 
       const editBtn = createWidget(widget.BUTTON, {
-        x: 286,
-        y: y + 6,
-        w: 76,
-        h: ROW_H - 12,
-        radius: 12,
-        text: '✎',
+        x: 215,
+        y: btnY,
+        w: 135,
+        h: 52,
+        radius: 26,
+        text: getText('saved_edit'),
         text_size: 24,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
+        normal_color: COLOR_ACCENT,
+        press_color: 0x0288d1,
         click_func: () => {
           push({
             url: 'page/create',
@@ -146,13 +192,13 @@ Page({
       })
 
       const del = createWidget(widget.BUTTON, {
-        x: 370,
-        y: y + 6,
-        w: 70,
-        h: ROW_H - 12,
-        radius: 12,
+        x: 360,
+        y: btnY,
+        w: 80,
+        h: 52,
+        radius: 26,
         text: '×',
-        text_size: 32,
+        text_size: 34,
         normal_color: 0x330000,
         press_color: 0x550000,
         click_func: () => {
@@ -162,37 +208,37 @@ Page({
         },
       })
 
-      this.listWidgets.push(runBtn, editBtn, del)
+      this.listWidgets.push(nameBtn, nameLabel, infoLabel, runBtn, editBtn, del)
     }
 
-    // Scroll arrows
+    // Big scroll arrows at the bottom (easy to tap)
     if (this.routines.length > VISIBLE) {
       this.listWidgets.push(
         createWidget(widget.BUTTON, {
-          x: 444,
-          y: AREA_TOP,
-          w: 32,
-          h: 110,
-          radius: 8,
+          x: 40,
+          y: 420,
+          w: 190,
+          h: 52,
+          radius: 26,
           text: '▲',
-          text_size: 18,
-          normal_color: 0x000000,
-          press_color: 0x333333,
+          text_size: 24,
+          normal_color: COLOR_DARK_BTN,
+          press_color: COLOR_DARK_BTN_PRESS,
           click_func: () => {
             this.listOffset = Math.max(0, this.listOffset - 1)
             this.refreshList()
           },
         }),
         createWidget(widget.BUTTON, {
-          x: 444,
-          y: AREA_TOP + 130,
-          w: 32,
-          h: 110,
-          radius: 8,
+          x: 250,
+          y: 420,
+          w: 190,
+          h: 52,
+          radius: 26,
           text: '▼',
-          text_size: 18,
-          normal_color: 0x000000,
-          press_color: 0x333333,
+          text_size: 24,
+          normal_color: COLOR_DARK_BTN,
+          press_color: COLOR_DARK_BTN_PRESS,
           click_func: () => {
             this.listOffset = Math.min(maxOffset, this.listOffset + 1)
             this.refreshList()

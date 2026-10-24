@@ -66,6 +66,12 @@ msgstr "Crea una rutina y pulsa GUARDAR"
 msgid "steps_count"
 msgstr "pasos"
 
+msgid "saved_run"
+msgstr "Iniciar"
+
+msgid "saved_edit"
+msgstr "Editar"
+
 msgid "run_pause"
 msgstr "PAUSA"
 

@@ -7,11 +7,11 @@ Page({
   build() {
     createWidget(widget.TEXT, {
       x: 0,
-      y: 70,
+      y: 84,
       w: DEVICE_WIDTH,
-      h: 60,
+      h: 64,
       color: 0xffffff,
-      text_size: 40,
+      text_size: 44,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text_style: text_style.NONE,
@@ -19,13 +19,13 @@ Page({
     })
 
     createWidget(widget.BUTTON, {
-      x: 90,
-      y: 170,
-      w: 300,
-      h: 80,
-      radius: 40,
+      x: 70,
+      y: 188,
+      w: 340,
+      h: 96,
+      radius: 48,
       text: getText('home_new_routine'),
-      text_size: 30,
+      text_size: 32,
       normal_color: COLOR_ACCENT,
       press_color: 0x0288d1,
       click_func: () => {
@@ -34,13 +34,13 @@ Page({
     })
 
     createWidget(widget.BUTTON, {
-      x: 90,
-      y: 280,
-      w: 300,
-      h: 80,
-      radius: 40,
+      x: 70,
+      y: 308,
+      w: 340,
+      h: 96,
+      radius: 48,
       text: getText('home_saved'),
-      text_size: 30,
+      text_size: 32,
       normal_color: COLOR_DARK_BTN,
       press_color: COLOR_DARK_BTN_PRESS,
       click_func: () => {

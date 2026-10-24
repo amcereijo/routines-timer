@@ -27,8 +27,8 @@ for (let i = 0; i < 60; i++) MIN_VALUES.push(i)
 const SEC_VALUES = []
 for (let i = 0; i < 60; i += 5) SEC_VALUES.push(i)
 
-const WHEEL_H = 62
-const WHEEL_Y = 168
+const WHEEL_H = 72
+const WHEEL_Y = 172
 
 Page({
   onInit(params) {
@@ -57,6 +57,7 @@ Page({
     this.secIdx = 0
     this.listOffset = 0
     this.routineNameWidget = null
+    this.routineNameBtn = null
   },
 
   onDestroy() {
@@ -68,53 +69,50 @@ Page({
   build() {
     createWidget(widget.TEXT, {
       x: 0,
-      y: 16,
+      y: 20,
       w: DEVICE_WIDTH,
-      h: 40,
+      h: 46,
       color: 0xffffff,
-      text_size: 28,
+      text_size: 32,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text_style: text_style.NONE,
       text: this.editId != null ? getText('create_title_edit') : getText('create_title'),
     })
 
-    // Routine name row
-    this.routineNameWidget = createWidget(widget.TEXT, {
+    // Routine name row (tap the name itself to edit it)
+    this.routineNameBtn = createWidget(widget.BUTTON, {
       x: 40,
-      y: 56,
-      w: DEVICE_WIDTH - 80,
+      y: 64,
+      w: 400,
+      h: 46,
+      radius: 23,
+      normal_color: 0x141414,
+      press_color: 0x2a2a2a,
+      click_func: () => this.editRoutineName(),
+    })
+
+    this.routineNameWidget = createWidget(widget.TEXT, {
+      x: 60,
+      y: 70,
+      w: 340,
       h: 34,
       color: COLOR_ACCENT,
-      text_size: 20,
+      text_size: 24,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
     })
-    this.refreshRoutineName()
-
-    createWidget(widget.BUTTON, {
-      x: 350,
-      y: 54,
-      w: 90,
-      h: 38,
-      radius: 10,
-      text: '✎',
-      text_size: 22,
-      normal_color: COLOR_DARK_BTN,
-      press_color: COLOR_DARK_BTN_PRESS,
-      click_func: () => this.editRoutineName(),
-    })
-
-    // Bottom action bar
+    this.routineNameWidget.setEnable(false)
+    this.refreshRoutineName()    // Bottom action bar
     createWidget(widget.BUTTON, {
       x: 40,
-      y: 304,
+      y: 292,
       w: 400,
-      h: 64,
-      radius: 32,
+      h: 68,
+      radius: 34,
       text: `+ ${getText('create_add_step')}`,
-      text_size: 26,
+      text_size: 28,
       normal_color: COLOR_DARK_BTN,
       press_color: COLOR_DARK_BTN_PRESS,
       click_func: () => {
@@ -125,12 +123,12 @@ Page({
 
     createWidget(widget.BUTTON, {
       x: 40,
-      y: 380,
+      y: 376,
       w: 190,
-      h: 72,
-      radius: 36,
+      h: 80,
+      radius: 40,
       text: getText('create_start'),
-      text_size: 26,
+      text_size: 28,
       normal_color: COLOR_GREEN,
       press_color: 0x009624,
       click_func: () => {
@@ -144,12 +142,12 @@ Page({
 
     createWidget(widget.BUTTON, {
       x: 250,
-      y: 380,
+      y: 376,
       w: 190,
-      h: 72,
-      radius: 36,
+      h: 80,
+      radius: 40,
       text: getText('create_save'),
-      text_size: 26,
+      text_size: 28,
       normal_color: COLOR_ACCENT,
       press_color: 0x0288d1,
       click_func: () => {
@@ -212,20 +210,20 @@ Page({
   refreshList() {
     this.clearListWidgets()
 
-    const AREA_TOP = 96
-    const ROW_H = 56
+    const AREA_TOP = 112
+    const ROW_H = 70
     const ROW_GAP = 10
-    const VISIBLE = 3
+    const VISIBLE = 2
 
     if (this.steps.length === 0) {
       this.listWidgets.push(
         createWidget(widget.TEXT, {
           x: 0,
-          y: AREA_TOP + 50,
+          y: AREA_TOP + 40,
           w: DEVICE_WIDTH,
           h: 60,
           color: COLOR_SUBTEXT,
-          text_size: 24,
+          text_size: 26,
           align_h: align.CENTER_H,
           align_v: align.CENTER_V,
           text: getText('saved_empty_hint'),
@@ -246,9 +244,9 @@ Page({
       const rowBtn = createWidget(widget.BUTTON, {
         x: 40,
         y,
-        w: 312,
+        w: 318,
         h: ROW_H,
-        radius: 14,
+        radius: 16,
         normal_color: 0x141414,
         press_color: 0x2a2a2a,
         click_func: () => {
@@ -256,28 +254,43 @@ Page({
         },
       })
 
-      const label = createWidget(widget.TEXT, {
-        x: 56,
+      // Line 1: step number + name
+      const nameLabel = createWidget(widget.TEXT, {
+        x: 58,
         y: y + 6,
-        w: 240,
-        h: ROW_H - 12,
+        w: 288,
+        h: 32,
         color: 0xffffff,
+        text_size: 24,
+        align_h: align.LEFT,
+        align_v: align.CENTER_V,
+        text: `${i + 1} · ${this.stepDisplayName(i)}`,
+      })
+      // Let the button underneath receive the tap
+      nameLabel.setEnable(false)
+
+      // Line 2: duration
+      const durLabel = createWidget(widget.TEXT, {
+        x: 58,
+        y: y + 38,
+        w: 288,
+        h: 28,
+        color: COLOR_ACCENT,
         text_size: 22,
         align_h: align.LEFT,
         align_v: align.CENTER_V,
-        text: `${i + 1} · ${this.stepDisplayName(i)} · ${formatDuration(step.seconds)}`,
+        text: formatDuration(step.seconds),
       })
-      // Let the button underneath receive the tap
-      label.setEnable(false)
+      durLabel.setEnable(false)
 
       const del = createWidget(widget.BUTTON, {
-        x: 360,
-        y: y + 4,
-        w: 80,
-        h: ROW_H - 8,
-        radius: 12,
+        x: 366,
+        y: y + 6,
+        w: 74,
+        h: ROW_H - 12,
+        radius: 14,
         text: '×',
-        text_size: 32,
+        text_size: 34,
         normal_color: 0x330000,
         press_color: 0x550000,
         click_func: () => {
@@ -286,37 +299,48 @@ Page({
         },
       })
 
-      this.listWidgets.push(rowBtn, label, del)
+      this.listWidgets.push(rowBtn, nameLabel, durLabel, del)
     }
 
-    // Scroll arrows if there are more steps than visible
+    // Page indicator + scroll arrows on one compact strip (above "Add Step")
     if (this.steps.length > VISIBLE) {
       this.listWidgets.push(
         createWidget(widget.BUTTON, {
-          x: 444,
-          y: AREA_TOP,
-          w: 32,
-          h: 90,
-          radius: 8,
+          x: 40,
+          y: 264,
+          w: 110,
+          h: 26,
+          radius: 13,
           text: '▲',
-          text_size: 18,
-          normal_color: 0x000000,
-          press_color: 0x333333,
+          text_size: 16,
+          normal_color: COLOR_DARK_BTN,
+          press_color: COLOR_DARK_BTN_PRESS,
           click_func: () => {
             this.listOffset = Math.max(0, this.listOffset - 1)
             this.refreshList()
           },
         }),
-        createWidget(widget.BUTTON, {
-          x: 444,
-          y: AREA_TOP + 100,
-          w: 32,
-          h: 90,
-          radius: 8,
-          text: '▼',
+        createWidget(widget.TEXT, {
+          x: 160,
+          y: 264,
+          w: 160,
+          h: 26,
+          color: COLOR_SUBTEXT,
           text_size: 18,
-          normal_color: 0x000000,
-          press_color: 0x333333,
+          align_h: align.CENTER_H,
+          align_v: align.CENTER_V,
+          text: `${this.listOffset + 1}-${Math.min(this.listOffset + VISIBLE, this.steps.length)} / ${this.steps.length}`,
+        }),
+        createWidget(widget.BUTTON, {
+          x: 330,
+          y: 264,
+          w: 110,
+          h: 26,
+          radius: 13,
+          text: '▼',
+          text_size: 16,
+          normal_color: COLOR_DARK_BTN,
+          press_color: COLOR_DARK_BTN_PRESS,
           click_func: () => {
             this.listOffset = Math.min(maxOffset, this.listOffset + 1)
             this.refreshList()
@@ -348,67 +372,65 @@ Page({
       }),
       createWidget(widget.TEXT, {
         x: 0,
-        y: 36,
+        y: 34,
         w: DEVICE_WIDTH,
-        h: 40,
+        h: 44,
         color: 0xffffff,
-        text_size: 26,
+        text_size: 30,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('picker_title'),
       })
     )
 
-    // ---- step name row ----
-    this.pickerNameWidget = createWidget(widget.TEXT, {
+    // ---- step name row (tap the row to edit the name) ----
+    const nameRowBtn = createWidget(widget.BUTTON, {
       x: 40,
-      y: 84,
-      w: 300,
-      h: 40,
+      y: 86,
+      w: 400,
+      h: 48,
+      radius: 24,
+      normal_color: 0x141414,
+      press_color: 0x2a2a2a,
+      click_func: () => {
+        promptText({
+          title: getText('name_input_title_step'),
+          text: this.pickerName,
+          onDone: (name) => {
+            this.pickerName = name
+            this.pickerNameWidget.setProperty(
+              prop.TEXT,
+              name || getText('name_input_title_step')
+            )
+          },
+          onCancel: () => {},
+        })
+      },
+    })
+
+    this.pickerNameWidget = createWidget(widget.TEXT, {
+      x: 60,
+      y: 93,
+      w: 360,
+      h: 34,
       color: COLOR_ACCENT,
-      text_size: 22,
-      align_h: align.LEFT,
+      text_size: 26,
+      align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: this.pickerName || getText('name_input_title_step'),
     })
-    this.pickerWidgets.push(
-      this.pickerNameWidget,
-      createWidget(widget.BUTTON, {
-        x: 350,
-        y: 84,
-        w: 90,
-        h: 40,
-        radius: 10,
-        text: '✎',
-        text_size: 22,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
-        click_func: () => {
-          promptText({
-            title: getText('name_input_title_step'),
-            text: this.pickerName,
-            onDone: (name) => {
-              this.pickerName = name
-              this.pickerNameWidget.setProperty(
-                prop.TEXT,
-                name || getText('name_input_title_step')
-              )
-            },
-            onCancel: () => {},
-          })
-        },
-      })
-    )
+    this.pickerNameWidget.setEnable(false)
+    this.pickerWidgets.push(nameRowBtn, this.pickerNameWidget)
 
     // ---- minutes wheel ----
     this.pickerWidgets.push(
       createWidget(widget.TEXT, {
         x: 0,
-        y: WHEEL_Y - 32,
+        y: WHEEL_Y - 34,
         w: DEVICE_WIDTH,
-        h: 28,
+        h: 30,
         color: COLOR_SUBTEXT,
-        text_size: 20,
+        text_size: 24,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('picker_min'),
@@ -416,12 +438,12 @@ Page({
     )
 
     const minVal = createWidget(widget.TEXT, {
-      x: 140,
+      x: 130,
       y: WHEEL_Y,
-      w: 200,
+      w: 220,
       h: WHEEL_H,
       color: 0xffffff,
-      text_size: 48,
+      text_size: 56,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: `${MIN_VALUES[this.minIdx]}`,
@@ -430,13 +452,13 @@ Page({
     this.pickerWidgets.push(
       minVal,
       createWidget(widget.BUTTON, {
-        x: 56,
+        x: 40,
         y: WHEEL_Y,
-        w: 68,
+        w: 80,
         h: WHEEL_H,
-        radius: 16,
+        radius: 20,
         text: '−',
-        text_size: 36,
+        text_size: 40,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => {
@@ -445,13 +467,13 @@ Page({
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 356,
+        x: 360,
         y: WHEEL_Y,
-        w: 68,
+        w: 80,
         h: WHEEL_H,
-        radius: 16,
+        radius: 20,
         text: '+',
-        text_size: 36,
+        text_size: 40,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => {
@@ -465,11 +487,11 @@ Page({
     this.pickerWidgets.push(
       createWidget(widget.TEXT, {
         x: 0,
-        y: WHEEL_Y + 90,
+        y: WHEEL_Y + 98,
         w: DEVICE_WIDTH,
-        h: 28,
+        h: 30,
         color: COLOR_SUBTEXT,
-        text_size: 20,
+        text_size: 24,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('picker_sec'),
@@ -477,12 +499,12 @@ Page({
     )
 
     const secVal = createWidget(widget.TEXT, {
-      x: 140,
-      y: WHEEL_Y + 122,
-      w: 200,
+      x: 130,
+      y: WHEEL_Y + 132,
+      w: 220,
       h: WHEEL_H,
       color: 0xffffff,
-      text_size: 48,
+      text_size: 56,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: `${SEC_VALUES[this.secIdx]}`,
@@ -491,13 +513,13 @@ Page({
     this.pickerWidgets.push(
       secVal,
       createWidget(widget.BUTTON, {
-        x: 56,
-        y: WHEEL_Y + 122,
-        w: 68,
+        x: 40,
+        y: WHEEL_Y + 132,
+        w: 80,
         h: WHEEL_H,
-        radius: 16,
+        radius: 20,
         text: '−',
-        text_size: 36,
+        text_size: 40,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => {
@@ -506,13 +528,13 @@ Page({
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 356,
-        y: WHEEL_Y + 122,
-        w: 68,
+        x: 360,
+        y: WHEEL_Y + 132,
+        w: 80,
         h: WHEEL_H,
-        radius: 16,
+        radius: 20,
         text: '+',
-        text_size: 36,
+        text_size: 40,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => {
@@ -525,25 +547,25 @@ Page({
     // ---- cancel / confirm ----
     this.pickerWidgets.push(
       createWidget(widget.BUTTON, {
-        x: 60,
-        y: 398,
-        w: 160,
-        h: 58,
-        radius: 29,
+        x: 50,
+        y: 400,
+        w: 175,
+        h: 64,
+        radius: 32,
         text: '✕',
-        text_size: 26,
+        text_size: 30,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => this.closePicker(),
       }),
       createWidget(widget.BUTTON, {
-        x: 260,
-        y: 398,
-        w: 160,
-        h: 58,
-        radius: 29,
+        x: 255,
+        y: 400,
+        w: 175,
+        h: 64,
+        radius: 32,
         text: '✓',
-        text_size: 28,
+        text_size: 32,
         normal_color: COLOR_ACCENT,
         press_color: 0x0288d1,
         click_func: () => {
@@ -552,7 +574,7 @@ Page({
             if (this.pickerCtx.mode === 'add') {
               this.steps.push({ seconds, name: this.pickerName || '' })
               // Auto-scroll to show the new step
-              this.listOffset = Math.max(0, this.steps.length - 3)
+              this.listOffset = Math.max(0, this.steps.length - 2)
             } else {
               this.steps[this.pickerCtx.index].seconds = seconds
               this.steps[this.pickerCtx.index].name = this.pickerName || ''

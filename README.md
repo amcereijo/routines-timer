@@ -11,20 +11,20 @@ until all complete. You can pause/resume or stop at any time.
 │     HOME     │ ───────────────▶│            CREATE            │
 │              │                 │  Step list (tap = edit,      │
 │  New Routine │◀─────────────── │  × = delete, ▲▼ = scroll)    │
-│  Saved       │      back       │                              │
-└──────┬───────┘                 │  [+ Add Step]                │
-       │                         │  [START]        [SAVE]       │
-       │ Saved                   └───────┬─────────────┬────────┘
-       ▼                                 │             │
-┌──────────────┐                         │ push        │ save & push
-│    SAVED     │   tap routine           ▼             ▼
-│  routines    │ ────────────────▶ ┌──────────────────────────┐
-│  (run/✎/×)   │                   │           RUN            │
-└──────┬───────┘                   │  Step n/N  next-step →   │
-       │ ✎ edit                    │  big countdown + bar     │
-       └──────────▶ CREATE ◀────── │  [PAUSE/RESUME] [STOP]   │
-                     (prefilled)   └───────────┬──────────────┘
-                                               │ all steps done
+│  Saved       │      back       │  2 rows: name + duration     │
+└──────┬───────┘                 │                              │
+       │                         │  [+ Add Step]                │
+       │ Saved                   │  [START]        [SAVE]       │
+       ▼                         └───────┬─────────────┬────────┘
+┌──────────────┐                         │             │
+│    SAVED     │   ▶ Start / tap name    ▼             ▼
+│  2-line rows │ ────────────────▶ ┌──────────────────────────┐
+│  name+info   │                   │           RUN            │
+│  ▶Start Edit ×│                   │  Step n/N  next-step →   │
+└──────┬───────┘                   │  big countdown + bar     │
+       │ Edit                      │  [PAUSE/RESUME] [STOP]   │
+       └──────────▶ CREATE ◀────── └───────────┬──────────────┘
+                     (prefilled)               │ all steps done
                                                ▼
                                         "DONE!" → OK → back
 ```
@@ -33,21 +33,22 @@ until all complete. You can pause/resume or stop at any time.
 
 1. **Create a routine**
    - Home → **New Routine**
-   - *(Optional)* tap **✎** next to the routine name to give it a name
+   - *(Optional)* tap the **routine name row** to give it a name
      (default: "Routine N" in the saved list).
    - **+ Add Step** → in the step editor:
-     - *(Optional)* tap **✎** next to the step name to name it
+     - *(Optional)* tap the **step name row** to name it
        (default: "Step N").
      - Pick a duration with the **min −/+** and **sec −/+** wheels, then `✓`
        (`✕` cancels).
    - Repeat to add more steps (max 20). Tap a step row to edit it,
-     `×` to delete it, `▲▼` to scroll when there are more than 3.
+     `×` to delete it, `▲▼` to scroll when there are more than 2.
 2. **Run it now**: press **START**.
 3. **Save it for later**: press **SAVE** → it appears in **Saved** under its
    name (max 10; when full, the oldest is dropped; saving again with the same
    name overwrites the previous one).
-4. **Run a saved routine**: Home → **Saved** → tap the routine.
-   - **✎** loads the routine back into the editor (title shows
+4. **Run a saved routine**: Home → **Saved** → tap the routine name or its
+   **▶ Start** button.
+   - **Edit** loads the routine back into the editor (title shows
      "Edit Routine"); pressing **SAVE** updates it in place, keeping its
      position in the list. Leaving with the back gesture discards changes.
    - **×** deletes the routine.

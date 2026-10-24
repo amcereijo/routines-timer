@@ -66,6 +66,12 @@ msgstr "Create a routine and press SAVE"
 msgid "steps_count"
 msgstr "steps"
 
+msgid "saved_run"
+msgstr "Start"
+
+msgid "saved_edit"
+msgstr "Edit"
+
 msgid "run_pause"
 msgstr "PAUSE"
 
