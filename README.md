@@ -1,4 +1,4 @@
-# Routine Timer — Zepp OS app for Amazfit Balance
+# Rutines Timer — Zepp OS app for Amazfit Balance
 
 Create sequences of timers ("routines"), run them immediately, or save them to
 run later. While a routine is running, each step counts down one after another
@@ -111,7 +111,7 @@ page/
   create.js             Routine name + create/edit steps, START / SAVE
   saved.js              Saved routines list
   run.js                Countdown runner (pause/resume/stop)
-  i18n/                 en-US, es-ES translations (.po)
+  i18n/                 en-US translations (.po)
 utils/
   constants.js          Colors and limits
   format.js             m:ss formatting helpers

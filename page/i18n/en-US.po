@@ -4,10 +4,10 @@ msgstr ""
 "Language: en-US\n"
 
 msgid "appName"
-msgstr "Routine Timer"
+msgstr "Rutines Timer"
 
 msgid "home_title"
-msgstr "Routine Timer"
+msgstr "Rutines Timer"
 
 msgid "home_new_routine"
 msgstr "New Routine"
