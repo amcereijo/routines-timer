@@ -60,7 +60,7 @@ Page({
     this.listOffset = renderRoutineList(this, {
       routines: this.routines,
       listOffset: this.listOffset,
-      top: 76,
+      top: 72,
       bottomY: 404,
       emptyText: getText('saved_empty'),
       emptyHint: getText('saved_empty_hint'),

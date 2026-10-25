@@ -41,8 +41,10 @@ export function renderRoutineList(ctx, {
   emptyHint,
   onChanged,
 }) {
-  const ROW_H = 128
-  const ROW_GAP = 16
+  const NAME_H = 72
+  const ACTIONS_H = 52
+  const ROW_H = NAME_H + ACTIONS_H + 6
+  const ROW_GAP = 12
   const VISIBLE = 2
 
   if (routines.length === 0) {
@@ -98,7 +100,7 @@ export function renderRoutineList(ctx, {
       x: 40,
       y,
       w: 400,
-      h: 62,
+      h: NAME_H,
       radius: 14,
       normal_color: 0x141414,
       press_color: 0x2a2a2a,
@@ -114,9 +116,9 @@ export function renderRoutineList(ctx, {
       x: 56,
       y: y + 4,
       w: 368,
-      h: 32,
+      h: 42,
       color: 0xffffff,
-      text_size: 26,
+      text_size: 34,
       align_h: align.LEFT,
       align_v: align.CENTER_V,
       text: routineName,
@@ -125,11 +127,11 @@ export function renderRoutineList(ctx, {
 
     const infoLabel = createWidget(widget.TEXT, {
       x: 56,
-      y: y + 32,
+      y: y + 42,
       w: 368,
       h: 26,
       color: COLOR_SUBTEXT,
-      text_size: 20,
+      text_size: 22,
       align_h: align.LEFT,
       align_v: align.CENTER_V,
       text: info,
@@ -137,7 +139,7 @@ export function renderRoutineList(ctx, {
     infoLabel.setEnable(false)
 
     // Line 2: action buttons (run / edit / delete)
-    const btnY = y + 68
+    const btnY = y + NAME_H + 4
     const runBtn = createWidget(widget.BUTTON, {
       x: 40,
       y: btnY,
@@ -197,14 +199,14 @@ export function renderRoutineList(ctx, {
 
   // Scroll arrows just above the bottom bar
   if (routines.length > VISIBLE) {
-    const arrowsY = bottomY - 60
+    const arrowsY = bottomY - 56
     ctx.listWidgets.push(
       createWidget(widget.BUTTON, {
         x: 40,
         y: arrowsY,
         w: 190,
-        h: 52,
-        radius: 26,
+        h: 48,
+        radius: 24,
         text: '▲',
         text_size: 24,
         normal_color: COLOR_DARK_BTN,
@@ -218,8 +220,8 @@ export function renderRoutineList(ctx, {
         x: 250,
         y: arrowsY,
         w: 190,
-        h: 52,
-        radius: 26,
+        h: 48,
+        radius: 24,
         text: '▼',
         text_size: 24,
         normal_color: COLOR_DARK_BTN,
