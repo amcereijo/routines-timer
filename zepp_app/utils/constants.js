@@ -1,6 +1,11 @@
 export const DEVICE_WIDTH = 480
 export const DEVICE_HEIGHT = 480
 
+// Safe drawing area (excludes rounded corners on Amazfit Balance)
+export const SAFE_MARGIN = 70
+export const SAFE_WIDTH = DEVICE_WIDTH - 2 * SAFE_MARGIN  // 340
+export const SAFE_HEIGHT = DEVICE_HEIGHT - 2 * SAFE_MARGIN  // 340
+
 export const COLOR_BG = 0x000000
 export const COLOR_TEXT = 0xffffff
 export const COLOR_SUBTEXT = 0x9e9e9e

@@ -15,6 +15,9 @@ import {
 } from '@zos/display'
 import {
   DEVICE_WIDTH,
+  SAFE_MARGIN,
+  SAFE_WIDTH,
+  SAFE_HEIGHT,
   COLOR_ACCENT,
   COLOR_GREEN,
   COLOR_RED,
@@ -72,118 +75,131 @@ Page({
     setPageBrightTime({ brightTime: 3600000 })
     pauseDropWristScreenOff({ duration: 0 })
 
+    // Layout within safe area
+    const topY = SAFE_MARGIN + 10
+    const bottomY = SAFE_MARGIN + SAFE_HEIGHT
+    const centerX = SAFE_MARGIN + Math.floor(SAFE_WIDTH / 2)
+    const contentW = SAFE_WIDTH
+
     this.widgets.routineText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 22,
-      w: DEVICE_WIDTH,
-      h: 34,
+      x: SAFE_MARGIN,
+      y: topY,
+      w: contentW,
+      h: 30,
       color: COLOR_ACCENT,
-      text_size: 24,
+      text_size: 22,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: this.routineName || '',
     })
 
     this.widgets.stepText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 60,
-      w: DEVICE_WIDTH,
-      h: 36,
+      x: SAFE_MARGIN,
+      y: topY + 32,
+      w: contentW,
+      h: 32,
       color: COLOR_SUBTEXT,
-      text_size: 26,
+      text_size: 24,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
     })
 
     this.widgets.repText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 98,
-      w: DEVICE_WIDTH,
-      h: 30,
+      x: SAFE_MARGIN,
+      y: topY + 64,
+      w: contentW,
+      h: 26,
       color: COLOR_ORANGE,
-      text_size: 22,
-      align_h: align.CENTER_H,
-      align_v: align.CENTER_V,
-      text: '',
-    })
-
-    this.widgets.nextText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 128,
-      w: DEVICE_WIDTH,
-      h: 30,
-      color: COLOR_SUBTEXT,
       text_size: 20,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
     })
 
+    this.widgets.nextText = createWidget(widget.TEXT, {
+      x: SAFE_MARGIN,
+      y: topY + 90,
+      w: contentW,
+      h: 26,
+      color: COLOR_SUBTEXT,
+      text_size: 18,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: '',
+    })
+
     this.widgets.phaseText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 160,
-      w: DEVICE_WIDTH,
-      h: 40,
+      x: SAFE_MARGIN,
+      y: topY + 116,
+      w: contentW,
+      h: 36,
       color: COLOR_ACCENT,
-      text_size: 32,
+      text_size: 28,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
     })
 
     this.widgets.timeText = createWidget(widget.TEXT, {
-      x: 0,
-      y: 200,
-      w: DEVICE_WIDTH,
-      h: 100,
+      x: SAFE_MARGIN,
+      y: topY + 152,
+      w: contentW,
+      h: 70,
       color: 0xffffff,
-      text_size: 96,
+      text_size: 64,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
-      text_style: text_style.NONE,
+      text_style: text_style.ELLIPSIS,
       text: '0:00',
     })
 
+    const barY = topY + 230
+    const barW = SAFE_WIDTH - 40
+    const barX = SAFE_MARGIN + 20
+
     this.widgets.barBg = createWidget(widget.FILL_RECT, {
-      x: 60,
-      y: 310,
-      w: 360,
-      h: 16,
-      radius: 8,
+      x: barX,
+      y: barY,
+      w: barW,
+      h: 12,
+      radius: 6,
       color: 0x1c1c1c,
     })
 
     this.widgets.barFill = createWidget(widget.FILL_RECT, {
-      x: 60,
-      y: 310,
-      w: 360,
-      h: 16,
-      radius: 8,
+      x: barX,
+      y: barY,
+      w: barW,
+      h: 12,
+      radius: 6,
       color: COLOR_ACCENT,
     })
 
+    const btnY = bottomY - 78
+    const btnW = Math.floor((SAFE_WIDTH - 10) / 2)
+
     this.widgets.pauseBtn = createWidget(widget.BUTTON, {
-      x: 40,
-      y: 360,
-      w: 190,
-      h: 84,
-      radius: 42,
+      x: SAFE_MARGIN,
+      y: btnY,
+      w: btnW,
+      h: 68,
+      radius: 34,
       text: getText('run_pause'),
-      text_size: 28,
+      text_size: 24,
       normal_color: COLOR_ORANGE,
       press_color: 0xc67000,
       click_func: () => this.togglePause(),
     })
 
     this.widgets.stopBtn = createWidget(widget.BUTTON, {
-      x: 250,
-      y: 360,
-      w: 190,
-      h: 84,
-      radius: 42,
+      x: SAFE_MARGIN + btnW + 10,
+      y: btnY,
+      w: btnW,
+      h: 68,
+      radius: 34,
       text: getText('run_stop'),
-      text_size: 28,
+      text_size: 24,
       normal_color: COLOR_RED,
       press_color: 0xb9004e,
       click_func: () => this.stopAll(),
@@ -310,13 +326,16 @@ Page({
     // Progress bar: work uses accent, rest uses orange
     const total = this.phase === 'work' ? step.seconds : (step.rest != null ? step.rest : DEFAULT_REST_SECONDS)
     const frac = total > 0 ? this.remaining / total : 0
-    const w = Math.max(0, Math.round(360 * frac))
+    const barW = SAFE_WIDTH - 40
+    const w = Math.max(0, Math.round(barW * frac))
+    const barX = SAFE_MARGIN + 20
+    const barY = SAFE_MARGIN + 10 + 230
     this.widgets.barFill.setProperty(prop.MORE, {
-      x: 60,
-      y: 310,
+      x: barX,
+      y: barY,
       w,
-      h: 16,
-      radius: 8,
+      h: 12,
+      radius: 6,
       color: this.remaining <= 5 ? COLOR_RED : phaseColor,
     })
   },
@@ -360,37 +379,38 @@ Page({
       } catch (e) {}
     })
 
+    const doneCenterX = SAFE_MARGIN + Math.floor(SAFE_WIDTH / 2)
     this.doneWidgets = [
       createWidget(widget.TEXT, {
-        x: 0,
-        y: 120,
-        w: DEVICE_WIDTH,
-        h: 96,
+        x: SAFE_MARGIN,
+        y: SAFE_MARGIN + 80,
+        w: SAFE_WIDTH,
+        h: 72,
         color: COLOR_GREEN,
-        text_size: 72,
+        text_size: 64,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('done_title'),
       }),
       createWidget(widget.TEXT, {
-        x: 0,
-        y: 228,
-        w: DEVICE_WIDTH,
-        h: 48,
+        x: SAFE_MARGIN,
+        y: SAFE_MARGIN + 160,
+        w: SAFE_WIDTH,
+        h: 40,
         color: 0xffffff,
-        text_size: 30,
+        text_size: 26,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('done_text'),
       }),
       createWidget(widget.BUTTON, {
-        x: 120,
-        y: 330,
-        w: 240,
-        h: 88,
-        radius: 44,
+        x: SAFE_MARGIN + Math.floor((SAFE_WIDTH - 200) / 2),
+        y: SAFE_MARGIN + SAFE_HEIGHT - 100,
+        w: 200,
+        h: 76,
+        radius: 38,
         text: getText('done_ok'),
-        text_size: 32,
+        text_size: 28,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => back(),

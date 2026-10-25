@@ -8,6 +8,8 @@ import { push } from '@zos/router'
 import { getText } from '@zos/i18n'
 import {
   DEVICE_WIDTH,
+  SAFE_MARGIN,
+  SAFE_WIDTH,
   COLOR_ACCENT,
   COLOR_GREEN,
   COLOR_DARK_BTN,
@@ -41,18 +43,18 @@ export function renderRoutineList(ctx, {
   emptyHint,
   onChanged,
 }) {
-  const NAME_H = 72
-  const ACTIONS_H = 52
-  const ROW_H = NAME_H + ACTIONS_H + 6
-  const ROW_GAP = 12
+  const NAME_H = 50
+  const ACTIONS_H = 40
+  const ROW_H = NAME_H + ACTIONS_H + 4
+  const ROW_GAP = 8
   const VISIBLE = 2
 
   if (routines.length === 0) {
     ctx.listWidgets.push(
       createWidget(widget.TEXT, {
-        x: 0,
+        x: SAFE_MARGIN,
         y: top + 88,
-        w: DEVICE_WIDTH,
+        w: SAFE_WIDTH,
         h: 48,
         color: COLOR_SUBTEXT,
         text_size: 30,
@@ -64,9 +66,9 @@ export function renderRoutineList(ctx, {
     if (emptyHint) {
       ctx.listWidgets.push(
         createWidget(widget.TEXT, {
-          x: 0,
+          x: SAFE_MARGIN,
           y: top + 140,
-          w: DEVICE_WIDTH,
+          w: SAFE_WIDTH,
           h: 40,
           color: COLOR_SUBTEXT,
           text_size: 24,
@@ -97,9 +99,9 @@ export function renderRoutineList(ctx, {
 
     // Line 1: routine name (tappable to run)
     const nameBtn = createWidget(widget.BUTTON, {
-      x: 40,
+      x: SAFE_MARGIN,
       y,
-      w: 400,
+      w: SAFE_WIDTH,
       h: NAME_H,
       radius: 14,
       normal_color: 0x141414,
@@ -113,12 +115,12 @@ export function renderRoutineList(ctx, {
     })
 
     const nameLabel = createWidget(widget.TEXT, {
-      x: 56,
-      y: y + 4,
-      w: 368,
-      h: 42,
+      x: SAFE_MARGIN + 16,
+      y: y + 2,
+      w: SAFE_WIDTH - 32,
+      h: 28,
       color: 0xffffff,
-      text_size: 34,
+      text_size: 24,
       align_h: align.LEFT,
       align_v: align.CENTER_V,
       text: routineName,
@@ -126,12 +128,12 @@ export function renderRoutineList(ctx, {
     nameLabel.setEnable(false)
 
     const infoLabel = createWidget(widget.TEXT, {
-      x: 56,
-      y: y + 42,
-      w: 368,
-      h: 26,
+      x: SAFE_MARGIN + 16,
+      y: y + 28,
+      w: SAFE_WIDTH - 32,
+      h: 20,
       color: COLOR_SUBTEXT,
-      text_size: 22,
+      text_size: 18,
       align_h: align.LEFT,
       align_v: align.CENTER_V,
       text: info,
@@ -141,13 +143,13 @@ export function renderRoutineList(ctx, {
     // Line 2: action buttons (run / edit / delete)
     const btnY = y + NAME_H + 4
     const runBtn = createWidget(widget.BUTTON, {
-      x: 40,
+      x: SAFE_MARGIN,
       y: btnY,
-      w: 165,
-      h: 52,
-      radius: 26,
+      w: 120,
+      h: ACTIONS_H,
+      radius: 20,
       text: `▶ ${getText('saved_run')}`,
-      text_size: 24,
+      text_size: 18,
       normal_color: COLOR_GREEN,
       press_color: 0x009624,
       click_func: () => {
@@ -159,13 +161,13 @@ export function renderRoutineList(ctx, {
     })
 
     const editBtn = createWidget(widget.BUTTON, {
-      x: 215,
+      x: SAFE_MARGIN + 128,
       y: btnY,
-      w: 135,
-      h: 52,
-      radius: 26,
+      w: 90,
+      h: ACTIONS_H,
+      radius: 20,
       text: getText('saved_edit'),
-      text_size: 24,
+      text_size: 18,
       normal_color: COLOR_ACCENT,
       press_color: 0x0288d1,
       click_func: () => {
@@ -179,13 +181,13 @@ export function renderRoutineList(ctx, {
     })
 
     const del = createWidget(widget.BUTTON, {
-      x: 360,
+      x: SAFE_MARGIN + SAFE_WIDTH - 70,
       y: btnY,
-      w: 80,
-      h: 52,
-      radius: 26,
+      w: 70,
+      h: ACTIONS_H,
+      radius: 20,
       text: '×',
-      text_size: 34,
+      text_size: 28,
       normal_color: 0x330000,
       press_color: 0x550000,
       click_func: () => {
@@ -199,16 +201,16 @@ export function renderRoutineList(ctx, {
 
   // Scroll arrows just above the bottom bar
   if (routines.length > VISIBLE) {
-    const arrowsY = bottomY - 56
+    const arrowsY = bottomY - 50
     ctx.listWidgets.push(
       createWidget(widget.BUTTON, {
-        x: 40,
+        x: SAFE_MARGIN,
         y: arrowsY,
-        w: 190,
-        h: 48,
-        radius: 24,
+        w: 150,
+        h: 42,
+        radius: 21,
         text: '▲',
-        text_size: 24,
+        text_size: 20,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => {
@@ -217,13 +219,13 @@ export function renderRoutineList(ctx, {
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 250,
+        x: SAFE_MARGIN + SAFE_WIDTH - 150,
         y: arrowsY,
-        w: 190,
-        h: 48,
-        radius: 24,
+        w: 150,
+        h: 42,
+        radius: 21,
         text: '▼',
-        text_size: 24,
+        text_size: 20,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => {

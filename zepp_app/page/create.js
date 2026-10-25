@@ -6,20 +6,20 @@ import {
   prop,
   text_style,
 } from '@zos/ui'
-import { push, back } from '@zos/router'
+import { back } from '@zos/router'
 import { getText } from '@zos/i18n'
 import {
-  DEVICE_WIDTH,
-  DEVICE_HEIGHT,
+  SAFE_MARGIN,
+  SAFE_WIDTH,
+  SAFE_HEIGHT,
   COLOR_ACCENT,
-  COLOR_GREEN,
   COLOR_DARK_BTN,
   COLOR_DARK_BTN_PRESS,
   COLOR_SUBTEXT,
   MAX_STEPS,
   DEFAULT_REST_SECONDS,
 } from '../utils/constants'
-import { formatDuration, formatStepSummary } from '../utils/format'
+import { formatStepSummary } from '../utils/format'
 import { addRoutine } from '../utils/storage'
 import { promptText } from '../utils/textInput'
 
@@ -30,8 +30,16 @@ for (let i = 0; i < 60; i += 5) SEC_VALUES.push(i)
 const REPEAT_VALUES = []
 for (let i = 1; i <= 20; i++) REPEAT_VALUES.push(i)
 
-const WHEEL_H = 60
-const WHEEL_Y = 140
+// ---- Layout (safe drawing area: 70..410 on both axes) ----
+const TITLE_Y = SAFE_MARGIN + 6 // 76
+const NAME_Y = SAFE_MARGIN + 44 // 114
+const LIST_TOP = SAFE_MARGIN + 88 // 158
+const SAVE_Y = SAFE_MARGIN + SAFE_HEIGHT - 60 // 350
+const LIST_H = SAVE_Y - 8 - LIST_TOP // 184
+const ROW_H = 54
+const ROW_GAP = 8
+const ADD_ROW_H = 46
+const DEL_W = 50
 
 Page({
   onInit(params) {
@@ -58,12 +66,14 @@ Page({
     this.listWidgets = []
     this.pickerWidgets = []
     this.pickerCtx = null
-    this.minIdx = 1
-    this.secIdx = 0
+    this.minIdx = 0
+    this.secIdx = 6
     this.repeatIdx = 0
     this.restMinIdx = 0
     this.restSecIdx = 2
-    this.listOffset = 0
+    this.listScrollY = 0
+    this.scrollToEnd = false
+    this.listView = null
     this.routineNameWidget = null
     this.routineNameBtn = null
   },
@@ -76,86 +86,56 @@ Page({
 
   build() {
     createWidget(widget.TEXT, {
-      x: 0,
-      y: 20,
-      w: DEVICE_WIDTH,
-      h: 46,
+      x: SAFE_MARGIN,
+      y: TITLE_Y,
+      w: SAFE_WIDTH,
+      h: 34,
       color: 0xffffff,
-      text_size: 32,
+      text_size: 26,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
-      text_style: text_style.NONE,
+      text_style: text_style.ELLIPSIS,
       text: this.editId != null ? getText('create_title_edit') : getText('create_title'),
     })
 
     // Routine name row (tap the name itself to edit it)
     this.routineNameBtn = createWidget(widget.BUTTON, {
-      x: 40,
-      y: 64,
-      w: 400,
-      h: 46,
-      radius: 23,
+      x: SAFE_MARGIN,
+      y: NAME_Y,
+      w: SAFE_WIDTH,
+      h: 38,
+      radius: 19,
       normal_color: 0x141414,
       press_color: 0x2a2a2a,
       click_func: () => this.editRoutineName(),
     })
 
     this.routineNameWidget = createWidget(widget.TEXT, {
-      x: 60,
-      y: 70,
-      w: 340,
-      h: 34,
+      x: SAFE_MARGIN + 16,
+      y: NAME_Y + 6,
+      w: SAFE_WIDTH - 32,
+      h: 26,
       color: COLOR_ACCENT,
-      text_size: 24,
+      text_size: 20,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
     })
     this.routineNameWidget.setEnable(false)
-    this.refreshRoutineName()    // Bottom action bar
-    createWidget(widget.BUTTON, {
-      x: 40,
-      y: 292,
-      w: 400,
-      h: 68,
-      radius: 34,
-      text: `+ ${getText('create_add_step')}`,
-      text_size: 28,
-      normal_color: COLOR_DARK_BTN,
-      press_color: COLOR_DARK_BTN_PRESS,
-      click_func: () => {
-        if (this.steps.length >= MAX_STEPS) return
-        this.openPicker({ mode: 'add' })
-      },
-    })
+    this.refreshRoutineName()
 
-    createWidget(widget.BUTTON, {
-      x: 40,
-      y: 376,
-      w: 190,
-      h: 80,
-      radius: 40,
-      text: getText('create_start'),
-      text_size: 28,
-      normal_color: COLOR_GREEN,
-      press_color: 0x009624,
-      click_func: () => {
-        if (this.steps.length === 0) return
-        push({
-          url: 'page/run',
-          params: JSON.stringify({ name: this.routineName, steps: this.steps }),
-        })
-      },
-    })
+    // Scrollable step list (created in refreshList)
+    this.refreshList()
 
+    // Save button: always visible, below the list
     createWidget(widget.BUTTON, {
-      x: 250,
-      y: 376,
-      w: 190,
-      h: 80,
-      radius: 40,
+      x: SAFE_MARGIN,
+      y: SAVE_Y,
+      w: SAFE_WIDTH,
+      h: 52,
+      radius: 26,
       text: getText('create_save'),
-      text_size: 28,
+      text_size: 22,
       normal_color: COLOR_ACCENT,
       press_color: 0x0288d1,
       click_func: () => {
@@ -164,14 +144,11 @@ Page({
         this.steps = []
         this.routineName = ''
         this.editId = null
-        this.listOffset = 0
         this.refreshRoutineName()
         this.refreshList()
         back()
       },
     })
-
-    this.refreshList()
   },
 
   refreshRoutineName() {
@@ -193,12 +170,19 @@ Page({
   },
 
   clearListWidgets() {
+    // Children first, then the scroll container itself
     this.listWidgets.forEach((w) => {
       try {
         deleteWidget(w)
       } catch (e) {}
     })
     this.listWidgets = []
+    if (this.listView) {
+      try {
+        deleteWidget(this.listView)
+      } catch (e) {}
+      this.listView = null
+    }
   },
 
   clearPickerWidgets() {
@@ -218,148 +202,144 @@ Page({
   refreshList() {
     this.clearListWidgets()
 
-    const AREA_TOP = 112
-    const ROW_H = 70
-    const ROW_GAP = 10
-    const VISIBLE = 2
+    // Scrollable container: behaves like a regular list of elements
+    const container = createWidget(widget.VIEW_CONTAINER, {
+      x: SAFE_MARGIN,
+      y: LIST_TOP,
+      w: SAFE_WIDTH,
+      h: LIST_H,
+      scroll_enable: 1,
+      bounce: 1,
+      scroll_complete_func: (info) => {
+        if (info && typeof info.yoffset === 'number') {
+          this.listScrollY = info.yoffset
+        }
+      },
+    })
+    this.listView = container
 
     if (this.steps.length === 0) {
+      // The "+ Add Step" button is the first item of the scroll, so the
+      // hint has to go below it.
       this.listWidgets.push(
-        createWidget(widget.TEXT, {
-          x: 0,
-          y: AREA_TOP + 40,
-          w: DEVICE_WIDTH,
-          h: 60,
-          color: COLOR_SUBTEXT,
-          text_size: 26,
-          align_h: align.CENTER_H,
-          align_v: align.CENTER_V,
-          text: getText('saved_empty_hint'),
-        })
-      )
-      return
-    }
-
-    const maxOffset = Math.max(0, this.steps.length - VISIBLE)
-    if (this.listOffset > maxOffset) this.listOffset = maxOffset
-
-    for (let row = 0; row < VISIBLE; row++) {
-      const i = this.listOffset + row
-      if (i >= this.steps.length) break
-      const step = this.steps[i]
-      const y = AREA_TOP + row * (ROW_H + ROW_GAP)
-
-      const rowBtn = createWidget(widget.BUTTON, {
-        x: 40,
-        y,
-        w: 318,
-        h: ROW_H,
-        radius: 16,
-        normal_color: 0x141414,
-        press_color: 0x2a2a2a,
-        click_func: () => {
-          this.openPicker({ mode: 'edit', index: i })
-        },
-      })
-
-      // Line 1: step number + name
-      const nameLabel = createWidget(widget.TEXT, {
-        x: 58,
-        y: y + 6,
-        w: 288,
-        h: 32,
-        color: 0xffffff,
-        text_size: 24,
-        align_h: align.LEFT,
-        align_v: align.CENTER_V,
-        text: `${i + 1} · ${this.stepDisplayName(i)}`,
-      })
-      // Let the button underneath receive the tap
-      nameLabel.setEnable(false)
-
-      // Line 2: duration + repeat indicator
-      const durLabel = createWidget(widget.TEXT, {
-        x: 58,
-        y: y + 38,
-        w: 288,
-        h: 28,
-        color: COLOR_ACCENT,
-        text_size: 22,
-        align_h: align.LEFT,
-        align_v: align.CENTER_V,
-        text: formatStepSummary(step),
-      })
-      durLabel.setEnable(false)
-
-      const del = createWidget(widget.BUTTON, {
-        x: 366,
-        y: y + 6,
-        w: 74,
-        h: ROW_H - 12,
-        radius: 14,
-        text: '×',
-        text_size: 34,
-        normal_color: 0x330000,
-        press_color: 0x550000,
-        click_func: () => {
-          this.steps.splice(i, 1)
-          this.refreshList()
-        },
-      })
-
-      this.listWidgets.push(rowBtn, nameLabel, durLabel, del)
-    }
-
-    // Page indicator + scroll arrows on one compact strip (above "Add Step")
-    if (this.steps.length > VISIBLE) {
-      this.listWidgets.push(
-        createWidget(widget.BUTTON, {
-          x: 40,
-          y: 264,
-          w: 110,
-          h: 26,
-          radius: 13,
-          text: '▲',
-          text_size: 16,
-          normal_color: COLOR_DARK_BTN,
-          press_color: COLOR_DARK_BTN_PRESS,
-          click_func: () => {
-            this.listOffset = Math.max(0, this.listOffset - 1)
-            this.refreshList()
-          },
-        }),
-        createWidget(widget.TEXT, {
-          x: 160,
-          y: 264,
-          w: 160,
-          h: 26,
+        container.createWidget(widget.TEXT, {
+          x: 12,
+          y: ADD_ROW_H + 10,
+          w: SAFE_WIDTH - 24,
+          h: 48,
           color: COLOR_SUBTEXT,
           text_size: 18,
           align_h: align.CENTER_H,
           align_v: align.CENTER_V,
-          text: `${this.listOffset + 1}-${Math.min(this.listOffset + VISIBLE, this.steps.length)} / ${this.steps.length}`,
-        }),
-        createWidget(widget.BUTTON, {
-          x: 330,
-          y: 264,
-          w: 110,
-          h: 26,
-          radius: 13,
-          text: '▼',
-          text_size: 16,
-          normal_color: COLOR_DARK_BTN,
-          press_color: COLOR_DARK_BTN_PRESS,
+          text_style: text_style.WRAP,
+          text: getText('saved_empty_hint'),
+        })
+      )
+    } else {
+      this.steps.forEach((step, i) => {
+        const y = i * (ROW_H + ROW_GAP)
+
+        // Row background: tap to edit the step
+        const rowBtn = container.createWidget(widget.BUTTON, {
+          x: 0,
+          y,
+          w: SAFE_WIDTH - DEL_W - 6,
+          h: ROW_H,
+          radius: 14,
+          normal_color: 0x141414,
+          press_color: 0x2a2a2a,
           click_func: () => {
-            this.listOffset = Math.min(maxOffset, this.listOffset + 1)
+            this.openPicker({ mode: 'edit', index: i })
+          },
+        })
+
+        // Line 1: step number + name
+        const nameLabel = container.createWidget(widget.TEXT, {
+          x: 14,
+          y: y + 4,
+          w: SAFE_WIDTH - DEL_W - 34,
+          h: 26,
+          color: 0xffffff,
+          text_size: 20,
+          align_h: align.LEFT,
+          align_v: align.CENTER_V,
+          text: `${i + 1} · ${this.stepDisplayName(i)}`,
+        })
+        nameLabel.setEnable(false)
+
+        // Line 2: duration + repeat indicator
+        const durLabel = container.createWidget(widget.TEXT, {
+          x: 14,
+          y: y + 28,
+          w: SAFE_WIDTH - DEL_W - 34,
+          h: 22,
+          color: COLOR_ACCENT,
+          text_size: 18,
+          align_h: align.LEFT,
+          align_v: align.CENTER_V,
+          text: formatStepSummary(step),
+        })
+        durLabel.setEnable(false)
+
+        // Delete button
+        const del = container.createWidget(widget.BUTTON, {
+          x: SAFE_WIDTH - DEL_W,
+          y: y + 4,
+          w: DEL_W,
+          h: ROW_H - 8,
+          radius: 12,
+          text: '×',
+          text_size: 28,
+          normal_color: 0x330000,
+          press_color: 0x550000,
+          click_func: () => {
+            this.steps.splice(i, 1)
             this.refreshList()
           },
         })
-      )
+
+        this.listWidgets.push(rowBtn, nameLabel, durLabel, del)
+      })
     }
+
+    // Last element of the scroll: add another step
+    const addY = this.steps.length * (ROW_H + ROW_GAP)
+    this.listWidgets.push(
+      container.createWidget(widget.BUTTON, {
+        x: 0,
+        y: addY,
+        w: SAFE_WIDTH,
+        h: ADD_ROW_H,
+        radius: ADD_ROW_H / 2,
+        text: `+ ${getText('create_add_step')}`,
+        text_size: 20,
+        normal_color: COLOR_DARK_BTN,
+        press_color: COLOR_DARK_BTN_PRESS,
+        click_func: () => {
+          if (this.steps.length >= MAX_STEPS) return
+          this.openPicker({ mode: 'add' })
+        },
+      })
+    )
+
+    // Scroll position: end of the list when a step was just added,
+    // otherwise keep the current offset.
+    const contentH = addY + ADD_ROW_H
+    const maxY = Math.max(0, contentH - LIST_H)
+    const targetY = this.scrollToEnd ? maxY : Math.min(this.listScrollY, maxY)
+    this.scrollToEnd = false
+
+    // The container needs a tick to know its final content height
+    setTimeout(() => {
+      if (!this.listView || this.listView !== container) return
+      try {
+        this.listView.setProperty(prop.POS_Y, targetY)
+      } catch (e) {}
+    }, 50)
   },
 
   openPicker(ctx) {
-    let seconds = 90
+    let seconds = 30
     let repeat = 1
     let rest = DEFAULT_REST_SECONDS
     if (ctx.mode === 'edit') {
@@ -368,6 +348,10 @@ Page({
       repeat = s.repeat || 1
       rest = s.rest != null ? s.rest : DEFAULT_REST_SECONDS
     }
+
+    // The list lives in a scroll layer that is always drawn above regular
+    // widgets, so it has to be removed while the picker overlay is open.
+    this.clearListWidgets()
 
     this.minIdx = Math.min(59, Math.floor(seconds / 60))
     const secMod = seconds % 60
@@ -379,45 +363,48 @@ Page({
     this.restSecIdx = SEC_VALUES.indexOf(restSecMod)
     if (this.restSecIdx < 0) this.restSecIdx = 0
     this.pickerCtx = ctx
-    // Track the picked name (default: current name or '')
     this.pickerName = ctx.mode === 'edit' ? this.steps[ctx.index].name || '' : ''
 
-    // Layout constants for better readability
-    const LABEL_SIZE = 20
-    const VALUE_SIZE = 42
-    const BTN_SIZE = 52
-    const BTN_FONT = 28
-    const ROW_H = 64
-    const GAP = 10
+    // Simple layout within safe area
+    const TOP = SAFE_MARGIN + 6
+    const BOT = SAFE_MARGIN + SAFE_HEIGHT - 6
+    const CX = SAFE_MARGIN + Math.floor(SAFE_WIDTH / 2)  // center X
+    const L = SAFE_MARGIN + 10
+    const R = SAFE_MARGIN + SAFE_WIDTH - 10
+    const BTN = 54
+    const VAL = 120
+    const GAP = 6
 
     this.pickerWidgets.push(
       createWidget(widget.FILL_RECT, {
-        x: 0,
-        y: 0,
-        w: DEVICE_WIDTH,
-        h: DEVICE_HEIGHT,
+        x: SAFE_MARGIN,
+        y: SAFE_MARGIN,
+        w: SAFE_WIDTH,
+        h: SAFE_HEIGHT,
         color: 0x000000,
       }),
       createWidget(widget.TEXT, {
-        x: 0,
-        y: 12,
-        w: DEVICE_WIDTH,
-        h: 36,
+        x: SAFE_MARGIN,
+        y: TOP,
+        w: SAFE_WIDTH,
+        h: 28,
         color: 0xffffff,
-        text_size: 26,
+        text_size: 22,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
+        text_style: text_style.ELLIPSIS,
         text: getText('picker_title'),
       })
     )
 
-    // ---- step name row (tap the row to edit the name) ----
+    // Name row
+    const nameY = TOP + 34
     const nameRowBtn = createWidget(widget.BUTTON, {
-      x: 30,
-      y: 52,
-      w: 420,
-      h: 44,
-      radius: 22,
+      x: L,
+      y: nameY,
+      w: R - L,
+      h: 36,
+      radius: 18,
       normal_color: 0x1a1a1a,
       press_color: 0x333333,
       click_func: () => {
@@ -437,175 +424,125 @@ Page({
     })
 
     this.pickerNameWidget = createWidget(widget.TEXT, {
-      x: 50,
-      y: 60,
-      w: 380,
-      h: 30,
+      x: L + 12,
+      y: nameY + 6,
+      w: R - L - 24,
+      h: 24,
       color: COLOR_ACCENT,
-      text_size: 22,
+      text_size: 16,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
+      text_style: text_style.ELLIPSIS,
       text: this.pickerName || getText('name_input_title_step'),
     })
     this.pickerNameWidget.setEnable(false)
     this.pickerWidgets.push(nameRowBtn, this.pickerNameWidget)
 
-    // ---- Row 1: Duration (min + sec side by side) ----
-    let y = 108
-    this.pickerWidgets.push(
-      createWidget(widget.TEXT, {
-        x: 30,
-        y,
-        w: 200,
-        h: 26,
-        color: COLOR_SUBTEXT,
-        text_size: LABEL_SIZE,
-        align_h: align.CENTER_H,
-        align_v: align.CENTER_V,
-        text: getText('picker_min'),
-      }),
-      createWidget(widget.TEXT, {
-        x: 250,
-        y,
-        w: 200,
-        h: 26,
-        color: COLOR_SUBTEXT,
-        text_size: LABEL_SIZE,
-        align_h: align.CENTER_H,
-        align_v: align.CENTER_V,
-        text: getText('picker_sec'),
-      })
-    )
-
-    y += 28
-    const minVal = createWidget(widget.TEXT, {
-      x: 60,
-      y,
-      w: 160,
-      h: ROW_H,
+    // Timer: mm:ss in one line (no label)
+    const timerY = nameY + 44
+    const timerVal = createWidget(widget.TEXT, {
+      x: CX - Math.floor(VAL / 2),
+      y: timerY,
+      w: VAL,
+      h: 48,
       color: 0xffffff,
-      text_size: VALUE_SIZE,
+      text_size: 36,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
-      text: `${MIN_VALUES[this.minIdx]}`,
+      text_style: text_style.ELLIPSIS,
+      text: `${String(MIN_VALUES[this.minIdx]).padStart(2, '0')}:${String(SEC_VALUES[this.secIdx]).padStart(2, '0')}`,
     })
 
-    const secVal = createWidget(widget.TEXT, {
-      x: 260,
-      y,
-      w: 160,
-      h: ROW_H,
-      color: 0xffffff,
-      text_size: VALUE_SIZE,
-      align_h: align.CENTER_H,
-      align_v: align.CENTER_V,
-      text: `${SEC_VALUES[this.secIdx]}`,
-    })
+    const timerMinusX = CX - Math.floor(VAL / 2) - BTN - GAP
+    const timerPlusX = CX + Math.floor(VAL / 2) + GAP
 
     this.pickerWidgets.push(
-      minVal,
-      secVal,
+      timerVal,
       createWidget(widget.BUTTON, {
-        x: 0,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
+        x: timerMinusX,
+        y: timerY,
+        w: BTN,
+        h: 48,
+        radius: 10,
         text: '−',
-        text_size: BTN_FONT,
+        text_size: 24,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => {
-          this.minIdx = (this.minIdx - 1 + MIN_VALUES.length) % MIN_VALUES.length
-          minVal.setProperty(prop.TEXT, `${MIN_VALUES[this.minIdx]}`)
+          let total = MIN_VALUES[this.minIdx] * 60 + SEC_VALUES[this.secIdx]
+          total = Math.max(0, total - 5)
+          this.minIdx = Math.floor(total / 60)
+          this.secIdx = SEC_VALUES.indexOf(total % 60)
+          if (this.secIdx < 0) this.secIdx = 0
+          timerVal.setProperty(prop.TEXT, `${String(MIN_VALUES[this.minIdx]).padStart(2, '0')}:${String(SEC_VALUES[this.secIdx]).padStart(2, '0')}`)
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 220,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
+        x: timerPlusX,
+        y: timerY,
+        w: BTN,
+        h: 48,
+        radius: 10,
         text: '+',
-        text_size: BTN_FONT,
+        text_size: 24,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => {
-          this.minIdx = (this.minIdx + 1) % MIN_VALUES.length
-          minVal.setProperty(prop.TEXT, `${MIN_VALUES[this.minIdx]}`)
-        },
-      }),
-      createWidget(widget.BUTTON, {
-        x: 260,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
-        text: '−',
-        text_size: BTN_FONT,
-        normal_color: 0x2a2a2a,
-        press_color: 0x444444,
-        click_func: () => {
-          this.secIdx = (this.secIdx - 1 + SEC_VALUES.length) % SEC_VALUES.length
-          secVal.setProperty(prop.TEXT, `${SEC_VALUES[this.secIdx]}`)
-        },
-      }),
-      createWidget(widget.BUTTON, {
-        x: 420,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
-        text: '+',
-        text_size: BTN_FONT,
-        normal_color: 0x2a2a2a,
-        press_color: 0x444444,
-        click_func: () => {
-          this.secIdx = (this.secIdx + 1) % SEC_VALUES.length
-          secVal.setProperty(prop.TEXT, `${SEC_VALUES[this.secIdx]}`)
+          let total = MIN_VALUES[this.minIdx] * 60 + SEC_VALUES[this.secIdx]
+          total = Math.min(3540, total + 5)
+          this.minIdx = Math.floor(total / 60)
+          this.secIdx = SEC_VALUES.indexOf(total % 60)
+          if (this.secIdx < 0) this.secIdx = 0
+          timerVal.setProperty(prop.TEXT, `${String(MIN_VALUES[this.minIdx]).padStart(2, '0')}:${String(SEC_VALUES[this.secIdx]).padStart(2, '0')}`)
         },
       })
     )
 
-    // ---- Row 2: Repeat (single centered control) ----
-    y = 200
+    // Repeat label
+    const repeatLabelY = timerY + 56
     this.pickerWidgets.push(
       createWidget(widget.TEXT, {
-        x: 0,
-        y,
-        w: DEVICE_WIDTH,
-        h: 26,
+        x: SAFE_MARGIN,
+        y: repeatLabelY,
+        w: SAFE_WIDTH,
+        h: 18,
         color: COLOR_SUBTEXT,
-        text_size: LABEL_SIZE,
+        text_size: 14,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
+        text_style: text_style.ELLIPSIS,
         text: getText('picker_repeat'),
       })
     )
 
-    y += 28
+    // Repeat control
+    const repeatY = repeatLabelY + 20
     const repeatVal = createWidget(widget.TEXT, {
-      x: 140,
-      y,
-      w: 200,
-      h: ROW_H,
+      x: CX - Math.floor(VAL / 2),
+      y: repeatY,
+      w: VAL,
+      h: 48,
       color: 0xffffff,
-      text_size: VALUE_SIZE,
+      text_size: 36,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
+      text_style: text_style.ELLIPSIS,
       text: `×${REPEAT_VALUES[this.repeatIdx]}`,
     })
+
+    const repeatMinusX = CX - Math.floor(VAL / 2) - BTN - GAP
+    const repeatPlusX = CX + Math.floor(VAL / 2) + GAP
 
     this.pickerWidgets.push(
       repeatVal,
       createWidget(widget.BUTTON, {
-        x: 60,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
+        x: repeatMinusX,
+        y: repeatY,
+        w: BTN,
+        h: 48,
+        radius: 10,
         text: '−',
-        text_size: BTN_FONT,
+        text_size: 24,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => {
@@ -614,13 +551,13 @@ Page({
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 360,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
+        x: repeatPlusX,
+        y: repeatY,
+        w: BTN,
+        h: 48,
+        radius: 10,
         text: '+',
-        text_size: BTN_FONT,
+        text_size: 24,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => {
@@ -630,101 +567,106 @@ Page({
       })
     )
 
-    // ---- Row 3: Rest (single centered control with min:sec) ----
-    y = 284
+    // Rest label
+    const restLabelY = repeatY + 56
     this.pickerWidgets.push(
       createWidget(widget.TEXT, {
-        x: 0,
-        y,
-        w: DEVICE_WIDTH,
-        h: 26,
+        x: SAFE_MARGIN,
+        y: restLabelY,
+        w: SAFE_WIDTH,
+        h: 18,
         color: COLOR_SUBTEXT,
-        text_size: LABEL_SIZE,
+        text_size: 14,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
+        text_style: text_style.ELLIPSIS,
         text: getText('picker_rest'),
       })
     )
 
-    y += 28
+    // Rest control
+    const restY = restLabelY + 20
     const restVal = createWidget(widget.TEXT, {
-      x: 140,
-      y,
-      w: 200,
-      h: ROW_H,
+      x: CX - Math.floor(VAL / 2),
+      y: restY,
+      w: VAL,
+      h: 48,
       color: 0xffffff,
-      text_size: VALUE_SIZE,
+      text_size: 36,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
-      text: `${MIN_VALUES[this.restMinIdx]}:${SEC_VALUES[this.restSecIdx] < 10 ? '0' : ''}${SEC_VALUES[this.restSecIdx]}`,
+      text_style: text_style.ELLIPSIS,
+      text: `${String(MIN_VALUES[this.restMinIdx]).padStart(2, '0')}:${String(SEC_VALUES[this.restSecIdx]).padStart(2, '0')}`,
     })
+
+    const restMinusX = CX - Math.floor(VAL / 2) - BTN - GAP
+    const restPlusX = CX + Math.floor(VAL / 2) + GAP
 
     this.pickerWidgets.push(
       restVal,
       createWidget(widget.BUTTON, {
-        x: 60,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
+        x: restMinusX,
+        y: restY,
+        w: BTN,
+        h: 48,
+        radius: 10,
         text: '−',
-        text_size: BTN_FONT,
+        text_size: 24,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => {
-          // Decrement rest by 5 seconds
           let total = MIN_VALUES[this.restMinIdx] * 60 + SEC_VALUES[this.restSecIdx]
           total = Math.max(0, total - 5)
           this.restMinIdx = Math.floor(total / 60)
           this.restSecIdx = SEC_VALUES.indexOf(total % 60)
           if (this.restSecIdx < 0) this.restSecIdx = 0
-          restVal.setProperty(prop.TEXT, `${MIN_VALUES[this.restMinIdx]}:${SEC_VALUES[this.restSecIdx] < 10 ? '0' : ''}${SEC_VALUES[this.restSecIdx]}`)
+          restVal.setProperty(prop.TEXT, `${String(MIN_VALUES[this.restMinIdx]).padStart(2, '0')}:${String(SEC_VALUES[this.restSecIdx]).padStart(2, '0')}`)
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 360,
-        y,
-        w: BTN_SIZE,
-        h: ROW_H,
-        radius: 14,
+        x: restPlusX,
+        y: restY,
+        w: BTN,
+        h: 48,
+        radius: 10,
         text: '+',
-        text_size: BTN_FONT,
+        text_size: 24,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => {
-          // Increment rest by 5 seconds
           let total = MIN_VALUES[this.restMinIdx] * 60 + SEC_VALUES[this.restSecIdx]
           total = Math.min(3599, total + 5)
           this.restMinIdx = Math.floor(total / 60)
           this.restSecIdx = SEC_VALUES.indexOf(total % 60)
           if (this.restSecIdx < 0) this.restSecIdx = 0
-          restVal.setProperty(prop.TEXT, `${MIN_VALUES[this.restMinIdx]}:${SEC_VALUES[this.restSecIdx] < 10 ? '0' : ''}${SEC_VALUES[this.restSecIdx]}`)
+          restVal.setProperty(prop.TEXT, `${String(MIN_VALUES[this.restMinIdx]).padStart(2, '0')}:${String(SEC_VALUES[this.restSecIdx]).padStart(2, '0')}`)
         },
       })
     )
 
-    // ---- cancel / confirm ----
+    // Cancel / OK buttons
+    const btnY = BOT - 40
     this.pickerWidgets.push(
       createWidget(widget.BUTTON, {
-        x: 40,
-        y: 396,
-        w: 180,
-        h: 52,
-        radius: 26,
+        x: CX - 145,
+        y: btnY,
+        w: 130,
+        h: 44,
+        radius: 22,
         text: 'CANCEL',
-        text_size: 20,
+        text_size: 18,
         normal_color: 0x2a2a2a,
         press_color: 0x444444,
         click_func: () => this.closePicker(),
       }),
       createWidget(widget.BUTTON, {
-        x: 260,
-        y: 396,
-        w: 180,
-        h: 52,
-        radius: 26,
+        x: CX + 15,
+        y: btnY,
+        w: 130,
+        h: 44,
+        radius: 22,
         text: 'OK',
-        text_size: 22,
+        text_size: 20,
         normal_color: COLOR_ACCENT,
         press_color: 0x0288d1,
         click_func: () => {
@@ -740,14 +682,13 @@ Page({
             }
             if (this.pickerCtx.mode === 'add') {
               this.steps.push(stepData)
-              // Auto-scroll to show the new step
-              this.listOffset = Math.max(0, this.steps.length - 2)
+              // Go back to the list, always scrolled to the end
+              this.scrollToEnd = true
             } else {
               this.steps[this.pickerCtx.index] = stepData
             }
           }
           this.closePicker()
-          this.refreshList()
         },
       })
     )
@@ -756,5 +697,7 @@ Page({
   closePicker() {
     this.clearPickerWidgets()
     this.pickerNameWidget = null
+    // Rebuild the list (scroll position is preserved)
+    this.refreshList()
   },
 })

@@ -3,6 +3,9 @@ import { push } from '@zos/router'
 import { getText } from '@zos/i18n'
 import {
   DEVICE_WIDTH,
+  SAFE_MARGIN,
+  SAFE_WIDTH,
+  SAFE_HEIGHT,
   COLOR_ACCENT,
 } from '../utils/constants'
 import { getSavedRoutines } from '../utils/storage'
@@ -22,26 +25,26 @@ Page({
 
   build() {
     createWidget(widget.TEXT, {
-      x: 0,
-      y: 20,
-      w: DEVICE_WIDTH,
+      x: SAFE_MARGIN,
+      y: SAFE_MARGIN + 10,
+      w: SAFE_WIDTH,
       h: 46,
       color: 0xffffff,
       text_size: 32,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
-      text_style: text_style.NONE,
+      text_style: text_style.ELLIPSIS,
       text: getText('home_title'),
     })
 
     this.routines = getSavedRoutines()
     this.refreshList()
 
-    // Bottom bar: new routine
+    // Bottom bar: new routine (within safe area)
     createWidget(widget.BUTTON, {
-      x: 40,
-      y: 404,
-      w: 400,
+      x: SAFE_MARGIN,
+      y: SAFE_MARGIN + SAFE_HEIGHT - 74,
+      w: SAFE_WIDTH,
       h: 64,
       radius: 32,
       text: `+ ${getText('home_new_routine')}`,
@@ -60,8 +63,8 @@ Page({
     this.listOffset = renderRoutineList(this, {
       routines: this.routines,
       listOffset: this.listOffset,
-      top: 72,
-      bottomY: 404,
+      top: SAFE_MARGIN + 60,
+      bottomY: SAFE_MARGIN + SAFE_HEIGHT - 74,
       emptyText: getText('saved_empty'),
       emptyHint: getText('saved_empty_hint'),
       onChanged: () => this.refreshList(),
