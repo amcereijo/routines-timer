@@ -14,5 +14,9 @@
   "devDependencies": {
     "@zeppos/device-types": "^4.0.0",
     "@zeppos/zeus-cli": "^1.9.3"
+  },
+  "overrides": {
+    "package-json": "6.5.0",
+    "ora": "5.4.1"
   }
 }
