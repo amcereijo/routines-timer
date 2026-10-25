@@ -7,34 +7,36 @@ until all complete. You can pause/resume or stop at any time.
 ## User flow
 
 ```
-┌──────────────┐   New Routine   ┌──────────────────────────────┐
-│     HOME     │ ───────────────▶│            CREATE            │
-│              │                 │  Step list (tap = edit,      │
-│  New Routine │◀─────────────── │  × = delete, ▲▼ = scroll)    │
-│  Saved       │      back       │  2 rows: name + duration     │
-└──────┬───────┘                 │                              │
-       │                         │  [+ Add Step]                │
-       │ Saved                   │  [START]        [SAVE]       │
-       ▼                         └───────┬─────────────┬────────┘
-┌──────────────┐                         │             │
-│    SAVED     │   ▶ Start / tap name    ▼             ▼
-│  2-line rows │ ────────────────▶ ┌──────────────────────────┐
-│  name+info   │                   │           RUN            │
-│  ▶Start Edit ×│                   │  Step n/N  next-step →   │
-└──────┬───────┘                   │  big countdown + bar     │
-       │ Edit                      │  [PAUSE/RESUME] [STOP]   │
-       └──────────▶ CREATE ◀────── └───────────┬──────────────┘
-                     (prefilled)               │ all steps done
-                                               ▼
-                                        "DONE!" → OK → back
+┌──────────────────┐  + New Routine  ┌──────────────────────────┐
+│       HOME       │ ───────────────▶│          CREATE          │
+│  routine list    │                 │  Step list (tap = edit,  │
+│  (saved routines)│◀─────────────── │  × = delete, ▲▼ = scroll)│
+│                  │      back       │  2 rows: name + duration │
+│  [+ New Routine] │                 │                          │
+└──────┬───────────┘                 │  [+ Add Step]            │
+       │ tap name / ▶ Start          │  [START]        [SAVE]   │
+       │ Edit / ×                    └───────┬───────────┬──────┘
+       ▼                                     │           │
+┌──────────────────────────┐                 │           │ SAVE → back to HOME
+│           RUN            │◀────────────────┘           │
+│  Step n/N  next-step →   │   START                     │
+│  big countdown + bar     │◀────────────────────────────┘
+│  [PAUSE/RESUME] [STOP]   │
+└───────────┬──────────────┘
+            │ all steps done
+            ▼
+      "DONE!" → OK → back
 ```
+
+> Note: `page/saved` still exists in the build targets but is no longer
+> linked from the UI — HOME shows the saved routines directly.
 
 ## How to use (steps)
 
 1. **Create a routine**
-   - Home → **New Routine**
+   - Home → **+ New Routine**
    - *(Optional)* tap the **routine name row** to give it a name
-     (default: "Routine N" in the saved list).
+     (default: "Routine N" in the list).
    - **+ Add Step** → in the step editor:
      - *(Optional)* tap the **step name row** to name it
        (default: "Step N").
@@ -43,10 +45,10 @@ until all complete. You can pause/resume or stop at any time.
    - Repeat to add more steps (max 20). Tap a step row to edit it,
      `×` to delete it, `▲▼` to scroll when there are more than 2.
 2. **Run it now**: press **START**.
-3. **Save it for later**: press **SAVE** → it appears in **Saved** under its
-   name (max 10; when full, the oldest is dropped; saving again with the same
-   name overwrites the previous one).
-4. **Run a saved routine**: Home → **Saved** → tap the routine name or its
+3. **Save it for later**: press **SAVE** → it appears on the **Home** list
+   under its name (max 10; when full, the oldest is dropped; saving again with
+   the same name overwrites the previous one).
+4. **Run a saved routine**: on **Home**, tap the routine name or its
    **▶ Start** button.
    - **Edit** loads the routine back into the editor (title shows
      "Edit Routine"); pressing **SAVE** updates it in place, keeping its
@@ -107,15 +109,16 @@ app.json                App configuration (targets, permissions, i18n)
 app.js                  App entry
 assets/balance.r/       Icon (per-target assets: <target>.<shape>)
 page/
-  home.js               Main menu
+  home.js               Home: saved routines list + New Routine button
   create.js             Routine name + create/edit steps, START / SAVE
-  saved.js              Saved routines list
+  saved.js              Saved routines list (no longer linked from the UI)
   run.js                Countdown runner (pause/resume/stop)
   i18n/                 en-US translations (.po)
 utils/
   constants.js          Colors and limits
   format.js             m:ss formatting helpers
   storage.js            Saved-routine persistence
+  routineList.js        Shared saved-routine list widget renderer
   textInput.js          Text input: system keyboard w/ mini-keyboard fallback
   keyboard.js           Built-in mini keyboard overlay (API 3.x devices)
   alerts.js             Vibration + sound feedback for step/routine end

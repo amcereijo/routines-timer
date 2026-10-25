@@ -6,7 +6,7 @@ import {
   prop,
   text_style,
 } from '@zos/ui'
-import { push } from '@zos/router'
+import { push, back } from '@zos/router'
 import { getText } from '@zos/i18n'
 import {
   DEVICE_WIDTH,
@@ -159,7 +159,7 @@ Page({
         this.listOffset = 0
         this.refreshRoutineName()
         this.refreshList()
-        push({ url: 'page/saved' })
+        back()
       },
     })
 

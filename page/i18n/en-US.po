@@ -12,9 +12,6 @@ msgstr "Rutines Timer"
 msgid "home_new_routine"
 msgstr "New Routine"
 
-msgid "home_saved"
-msgstr "Saved"
-
 msgid "create_title"
 msgstr "New Routine"
 
