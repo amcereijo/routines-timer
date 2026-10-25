@@ -86,3 +86,21 @@ msgstr "All steps completed"
 
 msgid "done_ok"
 msgstr "OK"
+
+msgid "picker_repeat"
+msgstr "repeat"
+
+msgid "picker_rest"
+msgstr "rest"
+
+msgid "step_repeat_indicator"
+msgstr "×%1"
+
+msgid "run_rep"
+msgstr "Rep %1/%2"
+
+msgid "run_work"
+msgstr "WORK"
+
+msgid "run_rest"
+msgstr "REST"

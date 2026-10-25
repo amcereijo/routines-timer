@@ -13,3 +13,4 @@ export const COLOR_DARK_BTN_PRESS = 0x3a3a3a
 
 export const MAX_STEPS = 20
 export const MAX_SAVED = 10
+export const DEFAULT_REST_SECONDS = 10

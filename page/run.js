@@ -22,6 +22,7 @@ import {
   COLOR_DARK_BTN,
   COLOR_DARK_BTN_PRESS,
   COLOR_SUBTEXT,
+  DEFAULT_REST_SECONDS,
 } from '../utils/constants'
 import { formatDuration } from '../utils/format'
 import {
@@ -43,6 +44,8 @@ Page({
     } catch (e) {}
 
     this.currentIdx = 0
+    this.currentRep = 1
+    this.phase = 'work' // 'work' | 'rest'
     this.remaining = 0
     this.paused = false
     this.tickTimer = null
@@ -85,9 +88,21 @@ Page({
       x: 0,
       y: 60,
       w: DEVICE_WIDTH,
-      h: 44,
+      h: 36,
       color: COLOR_SUBTEXT,
-      text_size: 30,
+      text_size: 26,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: '',
+    })
+
+    this.widgets.repText = createWidget(widget.TEXT, {
+      x: 0,
+      y: 98,
+      w: DEVICE_WIDTH,
+      h: 30,
+      color: COLOR_ORANGE,
+      text_size: 22,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
@@ -95,11 +110,23 @@ Page({
 
     this.widgets.nextText = createWidget(widget.TEXT, {
       x: 0,
-      y: 108,
+      y: 128,
       w: DEVICE_WIDTH,
-      h: 34,
+      h: 30,
       color: COLOR_SUBTEXT,
-      text_size: 24,
+      text_size: 20,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: '',
+    })
+
+    this.widgets.phaseText = createWidget(widget.TEXT, {
+      x: 0,
+      y: 160,
+      w: DEVICE_WIDTH,
+      h: 40,
+      color: COLOR_ACCENT,
+      text_size: 32,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: '',
@@ -107,11 +134,11 @@ Page({
 
     this.widgets.timeText = createWidget(widget.TEXT, {
       x: 0,
-      y: 146,
+      y: 200,
       w: DEVICE_WIDTH,
-      h: 130,
+      h: 100,
       color: 0xffffff,
-      text_size: 120,
+      text_size: 96,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text_style: text_style.NONE,
@@ -120,7 +147,7 @@ Page({
 
     this.widgets.barBg = createWidget(widget.FILL_RECT, {
       x: 60,
-      y: 300,
+      y: 310,
       w: 360,
       h: 16,
       radius: 8,
@@ -129,7 +156,7 @@ Page({
 
     this.widgets.barFill = createWidget(widget.FILL_RECT, {
       x: 60,
-      y: 300,
+      y: 310,
       w: 360,
       h: 16,
       radius: 8,
@@ -138,7 +165,7 @@ Page({
 
     this.widgets.pauseBtn = createWidget(widget.BUTTON, {
       x: 40,
-      y: 356,
+      y: 360,
       w: 190,
       h: 84,
       radius: 42,
@@ -151,7 +178,7 @@ Page({
 
     this.widgets.stopBtn = createWidget(widget.BUTTON, {
       x: 250,
-      y: 356,
+      y: 360,
       w: 190,
       h: 84,
       radius: 42,
@@ -172,6 +199,8 @@ Page({
 
   startStep(index) {
     this.currentIdx = index
+    this.currentRep = 1
+    this.phase = 'work'
     this.remaining = Math.max(1, this.steps[index].seconds)
     this.paused = false
     this.updatePauseLabel()
@@ -188,19 +217,45 @@ Page({
         this.remaining = 0
         this.updateUI()
         this.stopTick()
-        // Single long vibration + double sound for the step that just ended
-        alertStepEnd()
-        if (this.currentIdx < this.steps.length - 1) {
-          this.startStep(this.currentIdx + 1)
-        } else {
-          this.onFinished()
-        }
+        this.onPhaseEnd()
         return
       }
       // Last 3 seconds of the step: single vibration + single soft sound
       if (this.remaining <= 3) alertStepWarning()
       this.updateUI()
     }, 1000)
+  },
+
+  onPhaseEnd() {
+    const step = this.steps[this.currentIdx]
+    const totalReps = step.repeat || 1
+
+    if (this.phase === 'work') {
+      // Work phase ended
+      alertStepEnd()
+      if (this.currentRep < totalReps) {
+        // Start rest phase
+        this.phase = 'rest'
+        this.remaining = step.rest != null ? step.rest : DEFAULT_REST_SECONDS
+        this.updateUI()
+        this.startTick()
+      } else {
+        // Move to next step or finish
+        if (this.currentIdx < this.steps.length - 1) {
+          this.startStep(this.currentIdx + 1)
+        } else {
+          this.onFinished()
+        }
+      }
+    } else {
+      // Rest phase ended, start next rep
+      alertStepEnd()
+      this.currentRep += 1
+      this.phase = 'work'
+      this.remaining = Math.max(1, step.seconds)
+      this.updateUI()
+      this.startTick()
+    }
   },
 
   stopTick() {
@@ -213,34 +268,56 @@ Page({
   },
 
   updateUI() {
-    const total = this.steps[this.currentIdx].seconds
     const step = this.steps[this.currentIdx]
+    const totalReps = step.repeat || 1
     const stepName =
       (step.name && step.name.trim()) || `${getText('step_label')} ${this.currentIdx + 1}`
+
+    // Step info line
     this.widgets.stepText.setProperty(
       prop.TEXT,
       `${this.currentIdx + 1}/${this.steps.length} · ${stepName}`
     )
 
-    const next = this.steps[this.currentIdx + 1]
-    const nextName =
-      next && next.name && next.name.trim() ? ` ${next.name.trim()}` : ''
-    this.widgets.nextText.setProperty(
-      prop.TEXT,
-      next ? `→ ${formatDuration(next.seconds)}${nextName}` : ''
-    )
+    // Repetition indicator (only when repeating)
+    if (totalReps > 1) {
+      this.widgets.repText.setProperty(
+        prop.TEXT,
+        getText('run_rep').replace('%1', this.currentRep).replace('%2', totalReps)
+      )
+      this.widgets.repText.setProperty(prop.VISIBLE, true)
+    } else {
+      this.widgets.repText.setProperty(prop.VISIBLE, false)
+    }
+
+    // Phase indicator (WORK / REST)
+    const phaseColor = this.phase === 'work' ? COLOR_ACCENT : COLOR_ORANGE
+    const phaseText = this.phase === 'work' ? getText('run_work') : getText('run_rest')
+    this.widgets.phaseText.setProperty(prop.TEXT, phaseText)
+    this.widgets.phaseText.setProperty(prop.COLOR, phaseColor)
+
+    // Next step preview (only show when in last rep of current step)
+    let nextText = ''
+    if (this.currentRep >= totalReps && this.currentIdx < this.steps.length - 1) {
+      const next = this.steps[this.currentIdx + 1]
+      const nextName = next && next.name && next.name.trim() ? ` ${next.name.trim()}` : ''
+      nextText = `→ ${formatDuration(next.seconds)}${nextName}`
+    }
+    this.widgets.nextText.setProperty(prop.TEXT, nextText)
 
     this.widgets.timeText.setProperty(prop.TEXT, formatDuration(this.remaining))
 
+    // Progress bar: work uses accent, rest uses orange
+    const total = this.phase === 'work' ? step.seconds : (step.rest != null ? step.rest : DEFAULT_REST_SECONDS)
     const frac = total > 0 ? this.remaining / total : 0
     const w = Math.max(0, Math.round(360 * frac))
     this.widgets.barFill.setProperty(prop.MORE, {
       x: 60,
-      y: 300,
+      y: 310,
       w,
       h: 16,
       radius: 8,
-      color: this.remaining <= 5 ? COLOR_RED : COLOR_ACCENT,
+      color: this.remaining <= 5 ? COLOR_RED : phaseColor,
     })
   },
 
@@ -269,7 +346,9 @@ Page({
     ;[
       'stepText',
       'routineText',
+      'repText',
       'nextText',
+      'phaseText',
       'timeText',
       'barBg',
       'barFill',

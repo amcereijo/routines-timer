@@ -17,8 +17,9 @@ import {
   COLOR_DARK_BTN_PRESS,
   COLOR_SUBTEXT,
   MAX_STEPS,
+  DEFAULT_REST_SECONDS,
 } from '../utils/constants'
-import { formatDuration } from '../utils/format'
+import { formatDuration, formatStepSummary } from '../utils/format'
 import { addRoutine } from '../utils/storage'
 import { promptText } from '../utils/textInput'
 
@@ -26,9 +27,11 @@ const MIN_VALUES = []
 for (let i = 0; i < 60; i++) MIN_VALUES.push(i)
 const SEC_VALUES = []
 for (let i = 0; i < 60; i += 5) SEC_VALUES.push(i)
+const REPEAT_VALUES = []
+for (let i = 1; i <= 20; i++) REPEAT_VALUES.push(i)
 
-const WHEEL_H = 72
-const WHEEL_Y = 172
+const WHEEL_H = 60
+const WHEEL_Y = 140
 
 Page({
   onInit(params) {
@@ -46,6 +49,8 @@ Page({
           this.steps = data.edit.steps.map((s) => ({
             seconds: s.seconds,
             name: s.name || '',
+            repeat: s.repeat || 1,
+            rest: s.rest != null ? s.rest : DEFAULT_REST_SECONDS,
           }))
         }
       }
@@ -55,6 +60,9 @@ Page({
     this.pickerCtx = null
     this.minIdx = 1
     this.secIdx = 0
+    this.repeatIdx = 0
+    this.restMinIdx = 0
+    this.restSecIdx = 2
     this.listOffset = 0
     this.routineNameWidget = null
     this.routineNameBtn = null
@@ -269,7 +277,7 @@ Page({
       // Let the button underneath receive the tap
       nameLabel.setEnable(false)
 
-      // Line 2: duration
+      // Line 2: duration + repeat indicator
       const durLabel = createWidget(widget.TEXT, {
         x: 58,
         y: y + 38,
@@ -279,7 +287,7 @@ Page({
         text_size: 22,
         align_h: align.LEFT,
         align_v: align.CENTER_V,
-        text: formatDuration(step.seconds),
+        text: formatStepSummary(step),
       })
       durLabel.setEnable(false)
 
@@ -352,15 +360,35 @@ Page({
 
   openPicker(ctx) {
     let seconds = 90
-    if (ctx.mode === 'edit') seconds = this.steps[ctx.index].seconds
+    let repeat = 1
+    let rest = DEFAULT_REST_SECONDS
+    if (ctx.mode === 'edit') {
+      const s = this.steps[ctx.index]
+      seconds = s.seconds
+      repeat = s.repeat || 1
+      rest = s.rest != null ? s.rest : DEFAULT_REST_SECONDS
+    }
 
     this.minIdx = Math.min(59, Math.floor(seconds / 60))
     const secMod = seconds % 60
     this.secIdx = SEC_VALUES.indexOf(secMod)
     if (this.secIdx < 0) this.secIdx = 0
+    this.repeatIdx = Math.min(REPEAT_VALUES.length - 1, Math.max(0, repeat - 1))
+    this.restMinIdx = Math.min(59, Math.floor(rest / 60))
+    const restSecMod = rest % 60
+    this.restSecIdx = SEC_VALUES.indexOf(restSecMod)
+    if (this.restSecIdx < 0) this.restSecIdx = 0
     this.pickerCtx = ctx
     // Track the picked name (default: current name or '')
     this.pickerName = ctx.mode === 'edit' ? this.steps[ctx.index].name || '' : ''
+
+    // Layout constants for better readability
+    const LABEL_SIZE = 20
+    const VALUE_SIZE = 42
+    const BTN_SIZE = 52
+    const BTN_FONT = 28
+    const ROW_H = 64
+    const GAP = 10
 
     this.pickerWidgets.push(
       createWidget(widget.FILL_RECT, {
@@ -372,11 +400,11 @@ Page({
       }),
       createWidget(widget.TEXT, {
         x: 0,
-        y: 34,
+        y: 12,
         w: DEVICE_WIDTH,
-        h: 44,
+        h: 36,
         color: 0xffffff,
-        text_size: 30,
+        text_size: 26,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('picker_title'),
@@ -385,13 +413,13 @@ Page({
 
     // ---- step name row (tap the row to edit the name) ----
     const nameRowBtn = createWidget(widget.BUTTON, {
-      x: 40,
-      y: 86,
-      w: 400,
-      h: 48,
-      radius: 24,
-      normal_color: 0x141414,
-      press_color: 0x2a2a2a,
+      x: 30,
+      y: 52,
+      w: 420,
+      h: 44,
+      radius: 22,
+      normal_color: 0x1a1a1a,
+      press_color: 0x333333,
       click_func: () => {
         promptText({
           title: getText('name_input_title_step'),
@@ -409,12 +437,12 @@ Page({
     })
 
     this.pickerNameWidget = createWidget(widget.TEXT, {
-      x: 60,
-      y: 93,
-      w: 360,
-      h: 34,
+      x: 50,
+      y: 60,
+      w: 380,
+      h: 30,
       color: COLOR_ACCENT,
-      text_size: 26,
+      text_size: 22,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: this.pickerName || getText('name_input_title_step'),
@@ -422,121 +450,116 @@ Page({
     this.pickerNameWidget.setEnable(false)
     this.pickerWidgets.push(nameRowBtn, this.pickerNameWidget)
 
-    // ---- minutes wheel ----
+    // ---- Row 1: Duration (min + sec side by side) ----
+    let y = 108
     this.pickerWidgets.push(
       createWidget(widget.TEXT, {
-        x: 0,
-        y: WHEEL_Y - 34,
-        w: DEVICE_WIDTH,
-        h: 30,
+        x: 30,
+        y,
+        w: 200,
+        h: 26,
         color: COLOR_SUBTEXT,
-        text_size: 24,
+        text_size: LABEL_SIZE,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('picker_min'),
-      })
-    )
-
-    const minVal = createWidget(widget.TEXT, {
-      x: 130,
-      y: WHEEL_Y,
-      w: 220,
-      h: WHEEL_H,
-      color: 0xffffff,
-      text_size: 56,
-      align_h: align.CENTER_H,
-      align_v: align.CENTER_V,
-      text: `${MIN_VALUES[this.minIdx]}`,
-    })
-
-    this.pickerWidgets.push(
-      minVal,
-      createWidget(widget.BUTTON, {
-        x: 40,
-        y: WHEEL_Y,
-        w: 80,
-        h: WHEEL_H,
-        radius: 20,
-        text: '−',
-        text_size: 40,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
-        click_func: () => {
-          this.minIdx = (this.minIdx - 1 + MIN_VALUES.length) % MIN_VALUES.length
-          minVal.setProperty(prop.TEXT, `${MIN_VALUES[this.minIdx]}`)
-        },
       }),
-      createWidget(widget.BUTTON, {
-        x: 360,
-        y: WHEEL_Y,
-        w: 80,
-        h: WHEEL_H,
-        radius: 20,
-        text: '+',
-        text_size: 40,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
-        click_func: () => {
-          this.minIdx = (this.minIdx + 1) % MIN_VALUES.length
-          minVal.setProperty(prop.TEXT, `${MIN_VALUES[this.minIdx]}`)
-        },
-      })
-    )
-
-    // ---- seconds wheel ----
-    this.pickerWidgets.push(
       createWidget(widget.TEXT, {
-        x: 0,
-        y: WHEEL_Y + 98,
-        w: DEVICE_WIDTH,
-        h: 30,
+        x: 250,
+        y,
+        w: 200,
+        h: 26,
         color: COLOR_SUBTEXT,
-        text_size: 24,
+        text_size: LABEL_SIZE,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: getText('picker_sec'),
       })
     )
 
-    const secVal = createWidget(widget.TEXT, {
-      x: 130,
-      y: WHEEL_Y + 132,
-      w: 220,
-      h: WHEEL_H,
+    y += 28
+    const minVal = createWidget(widget.TEXT, {
+      x: 60,
+      y,
+      w: 160,
+      h: ROW_H,
       color: 0xffffff,
-      text_size: 56,
+      text_size: VALUE_SIZE,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: `${MIN_VALUES[this.minIdx]}`,
+    })
+
+    const secVal = createWidget(widget.TEXT, {
+      x: 260,
+      y,
+      w: 160,
+      h: ROW_H,
+      color: 0xffffff,
+      text_size: VALUE_SIZE,
       align_h: align.CENTER_H,
       align_v: align.CENTER_V,
       text: `${SEC_VALUES[this.secIdx]}`,
     })
 
     this.pickerWidgets.push(
+      minVal,
       secVal,
       createWidget(widget.BUTTON, {
-        x: 40,
-        y: WHEEL_Y + 132,
-        w: 80,
-        h: WHEEL_H,
-        radius: 20,
+        x: 0,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
         text: '−',
-        text_size: 40,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
+        click_func: () => {
+          this.minIdx = (this.minIdx - 1 + MIN_VALUES.length) % MIN_VALUES.length
+          minVal.setProperty(prop.TEXT, `${MIN_VALUES[this.minIdx]}`)
+        },
+      }),
+      createWidget(widget.BUTTON, {
+        x: 220,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
+        text: '+',
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
+        click_func: () => {
+          this.minIdx = (this.minIdx + 1) % MIN_VALUES.length
+          minVal.setProperty(prop.TEXT, `${MIN_VALUES[this.minIdx]}`)
+        },
+      }),
+      createWidget(widget.BUTTON, {
+        x: 260,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
+        text: '−',
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
         click_func: () => {
           this.secIdx = (this.secIdx - 1 + SEC_VALUES.length) % SEC_VALUES.length
           secVal.setProperty(prop.TEXT, `${SEC_VALUES[this.secIdx]}`)
         },
       }),
       createWidget(widget.BUTTON, {
-        x: 360,
-        y: WHEEL_Y + 132,
-        w: 80,
-        h: WHEEL_H,
-        radius: 20,
+        x: 420,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
         text: '+',
-        text_size: 40,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
         click_func: () => {
           this.secIdx = (this.secIdx + 1) % SEC_VALUES.length
           secVal.setProperty(prop.TEXT, `${SEC_VALUES[this.secIdx]}`)
@@ -544,40 +567,183 @@ Page({
       })
     )
 
+    // ---- Row 2: Repeat (single centered control) ----
+    y = 200
+    this.pickerWidgets.push(
+      createWidget(widget.TEXT, {
+        x: 0,
+        y,
+        w: DEVICE_WIDTH,
+        h: 26,
+        color: COLOR_SUBTEXT,
+        text_size: LABEL_SIZE,
+        align_h: align.CENTER_H,
+        align_v: align.CENTER_V,
+        text: getText('picker_repeat'),
+      })
+    )
+
+    y += 28
+    const repeatVal = createWidget(widget.TEXT, {
+      x: 140,
+      y,
+      w: 200,
+      h: ROW_H,
+      color: 0xffffff,
+      text_size: VALUE_SIZE,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: `×${REPEAT_VALUES[this.repeatIdx]}`,
+    })
+
+    this.pickerWidgets.push(
+      repeatVal,
+      createWidget(widget.BUTTON, {
+        x: 60,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
+        text: '−',
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
+        click_func: () => {
+          this.repeatIdx = (this.repeatIdx - 1 + REPEAT_VALUES.length) % REPEAT_VALUES.length
+          repeatVal.setProperty(prop.TEXT, `×${REPEAT_VALUES[this.repeatIdx]}`)
+        },
+      }),
+      createWidget(widget.BUTTON, {
+        x: 360,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
+        text: '+',
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
+        click_func: () => {
+          this.repeatIdx = (this.repeatIdx + 1) % REPEAT_VALUES.length
+          repeatVal.setProperty(prop.TEXT, `×${REPEAT_VALUES[this.repeatIdx]}`)
+        },
+      })
+    )
+
+    // ---- Row 3: Rest (single centered control with min:sec) ----
+    y = 284
+    this.pickerWidgets.push(
+      createWidget(widget.TEXT, {
+        x: 0,
+        y,
+        w: DEVICE_WIDTH,
+        h: 26,
+        color: COLOR_SUBTEXT,
+        text_size: LABEL_SIZE,
+        align_h: align.CENTER_H,
+        align_v: align.CENTER_V,
+        text: getText('picker_rest'),
+      })
+    )
+
+    y += 28
+    const restVal = createWidget(widget.TEXT, {
+      x: 140,
+      y,
+      w: 200,
+      h: ROW_H,
+      color: 0xffffff,
+      text_size: VALUE_SIZE,
+      align_h: align.CENTER_H,
+      align_v: align.CENTER_V,
+      text: `${MIN_VALUES[this.restMinIdx]}:${SEC_VALUES[this.restSecIdx] < 10 ? '0' : ''}${SEC_VALUES[this.restSecIdx]}`,
+    })
+
+    this.pickerWidgets.push(
+      restVal,
+      createWidget(widget.BUTTON, {
+        x: 60,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
+        text: '−',
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
+        click_func: () => {
+          // Decrement rest by 5 seconds
+          let total = MIN_VALUES[this.restMinIdx] * 60 + SEC_VALUES[this.restSecIdx]
+          total = Math.max(0, total - 5)
+          this.restMinIdx = Math.floor(total / 60)
+          this.restSecIdx = SEC_VALUES.indexOf(total % 60)
+          if (this.restSecIdx < 0) this.restSecIdx = 0
+          restVal.setProperty(prop.TEXT, `${MIN_VALUES[this.restMinIdx]}:${SEC_VALUES[this.restSecIdx] < 10 ? '0' : ''}${SEC_VALUES[this.restSecIdx]}`)
+        },
+      }),
+      createWidget(widget.BUTTON, {
+        x: 360,
+        y,
+        w: BTN_SIZE,
+        h: ROW_H,
+        radius: 14,
+        text: '+',
+        text_size: BTN_FONT,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
+        click_func: () => {
+          // Increment rest by 5 seconds
+          let total = MIN_VALUES[this.restMinIdx] * 60 + SEC_VALUES[this.restSecIdx]
+          total = Math.min(3599, total + 5)
+          this.restMinIdx = Math.floor(total / 60)
+          this.restSecIdx = SEC_VALUES.indexOf(total % 60)
+          if (this.restSecIdx < 0) this.restSecIdx = 0
+          restVal.setProperty(prop.TEXT, `${MIN_VALUES[this.restMinIdx]}:${SEC_VALUES[this.restSecIdx] < 10 ? '0' : ''}${SEC_VALUES[this.restSecIdx]}`)
+        },
+      })
+    )
+
     // ---- cancel / confirm ----
     this.pickerWidgets.push(
       createWidget(widget.BUTTON, {
-        x: 50,
-        y: 400,
-        w: 175,
-        h: 64,
-        radius: 32,
+        x: 40,
+        y: 396,
+        w: 180,
+        h: 52,
+        radius: 26,
         text: 'CANCEL',
         text_size: 20,
-        normal_color: COLOR_DARK_BTN,
-        press_color: COLOR_DARK_BTN_PRESS,
+        normal_color: 0x2a2a2a,
+        press_color: 0x444444,
         click_func: () => this.closePicker(),
       }),
       createWidget(widget.BUTTON, {
-        x: 255,
-        y: 400,
-        w: 175,
-        h: 64,
-        radius: 32,
+        x: 260,
+        y: 396,
+        w: 180,
+        h: 52,
+        radius: 26,
         text: 'OK',
         text_size: 22,
         normal_color: COLOR_ACCENT,
         press_color: 0x0288d1,
         click_func: () => {
           const seconds = MIN_VALUES[this.minIdx] * 60 + SEC_VALUES[this.secIdx]
+          const repeat = REPEAT_VALUES[this.repeatIdx]
+          const rest = MIN_VALUES[this.restMinIdx] * 60 + SEC_VALUES[this.restSecIdx]
           if (seconds > 0) {
+            const stepData = {
+              seconds,
+              name: this.pickerName || '',
+              repeat: repeat > 1 ? repeat : undefined,
+              rest: repeat > 1 ? rest : undefined,
+            }
             if (this.pickerCtx.mode === 'add') {
-              this.steps.push({ seconds, name: this.pickerName || '' })
+              this.steps.push(stepData)
               // Auto-scroll to show the new step
               this.listOffset = Math.max(0, this.steps.length - 2)
             } else {
-              this.steps[this.pickerCtx.index].seconds = seconds
-              this.steps[this.pickerCtx.index].name = this.pickerName || ''
+              this.steps[this.pickerCtx.index] = stepData
             }
           }
           this.closePicker()

@@ -22,7 +22,9 @@ function writeAll(list) {
 }
 
 /**
- * routines shape: [{ id: number, name: string, steps: [{seconds, name}] }]
+ * routines shape: [{ id: number, name: string, steps: [{seconds, name, repeat?, rest?}] }]
+ * - repeat: number of times to repeat the step (default 1, undefined = 1)
+ * - rest: seconds of rest between repetitions (default 10, undefined = 10)
  */
 export function getSavedRoutines() {
   return readAll()
