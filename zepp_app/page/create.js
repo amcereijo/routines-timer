@@ -63,6 +63,8 @@ Page({
         }
       }
     } catch (e) {}
+    this.headerWidgets = []
+    this.footerWidgets = []
     this.listWidgets = []
     this.pickerWidgets = []
     this.pickerCtx = null
@@ -79,24 +81,36 @@ Page({
   },
 
   onDestroy() {
+    this.clearHeaderWidgets()
     this.clearListWidgets()
+    this.clearFooterWidgets()
     this.clearPickerWidgets()
     this.steps = null
   },
 
   build() {
-    createWidget(widget.TEXT, {
-      x: SAFE_MARGIN,
-      y: TITLE_Y,
-      w: SAFE_WIDTH,
-      h: 34,
-      color: 0xffffff,
-      text_size: 26,
-      align_h: align.CENTER_H,
-      align_v: align.CENTER_V,
-      text_style: text_style.ELLIPSIS,
-      text: this.editId != null ? getText('create_title_edit') : getText('create_title'),
-    })
+    this.buildHeader()
+    this.refreshList()
+    this.buildFooter()
+  },
+
+  // ---- Header (title + routine name row) ----
+  buildHeader() {
+    this.headerWidgets.push(
+      createWidget(widget.TEXT, {
+        x: SAFE_MARGIN,
+        y: TITLE_Y,
+        w: SAFE_WIDTH,
+        h: 34,
+        color: 0xffffff,
+        text_size: 26,
+        align_h: align.CENTER_H,
+        align_v: align.CENTER_V,
+        text_style: text_style.ELLIPSIS,
+        text:
+          this.editId != null ? getText('create_title_edit') : getText('create_title'),
+      })
+    )
 
     // Routine name row (tap the name itself to edit it)
     this.routineNameBtn = createWidget(widget.BUTTON, {
@@ -109,6 +123,7 @@ Page({
       press_color: 0x2a2a2a,
       click_func: () => this.editRoutineName(),
     })
+    this.headerWidgets.push(this.routineNameBtn)
 
     this.routineNameWidget = createWidget(widget.TEXT, {
       x: SAFE_MARGIN + 16,
@@ -122,33 +137,73 @@ Page({
       text: '',
     })
     this.routineNameWidget.setEnable(false)
+    this.headerWidgets.push(this.routineNameWidget)
+
     this.refreshRoutineName()
+  },
 
-    // Scrollable step list (created in refreshList)
-    this.refreshList()
-
-    // Save button: always visible, below the list
-    createWidget(widget.BUTTON, {
-      x: SAFE_MARGIN,
-      y: SAVE_Y,
-      w: SAFE_WIDTH,
-      h: 52,
-      radius: 26,
-      text: getText('create_save'),
-      text_size: 22,
-      normal_color: COLOR_ACCENT,
-      press_color: 0x0288d1,
-      click_func: () => {
-        if (this.steps.length === 0) return
-        addRoutine(this.routineName, this.steps, this.editId)
-        this.steps = []
-        this.routineName = ''
-        this.editId = null
-        this.refreshRoutineName()
-        this.refreshList()
-        back()
-      },
+  clearHeaderWidgets() {
+    this.headerWidgets.forEach((w) => {
+      try {
+        deleteWidget(w)
+      } catch (e) {}
     })
+    this.headerWidgets = []
+    this.routineNameWidget = null
+    this.routineNameBtn = null
+  },
+
+  // ---- Footer (save button) ----
+  buildFooter() {
+    this.footerWidgets.push(
+      createWidget(widget.BUTTON, {
+        x: SAFE_MARGIN,
+        y: SAVE_Y,
+        w: SAFE_WIDTH,
+        h: 52,
+        radius: 26,
+        text: getText('create_save'),
+        text_size: 22,
+        normal_color: COLOR_ACCENT,
+        press_color: 0x0288d1,
+        click_func: () => {
+          if (this.steps.length === 0) return
+          addRoutine(this.routineName, this.steps, this.editId)
+          this.steps = []
+          this.routineName = ''
+          this.editId = null
+          this.refreshRoutineName()
+          this.refreshList()
+          back()
+        },
+      })
+    )
+  },
+
+  clearFooterWidgets() {
+    this.footerWidgets.forEach((w) => {
+      try {
+        deleteWidget(w)
+      } catch (e) {}
+    })
+    this.footerWidgets = []
+  },
+
+  /**
+   * Removes every widget of the page. Used before showing a modal overlay
+   * (picker or keyboard) so nothing of the page bleeds through it.
+   */
+  hidePageContent() {
+    this.clearHeaderWidgets()
+    this.clearListWidgets()
+    this.clearFooterWidgets()
+  },
+
+  /** Rebuilds the page widgets (scroll position is preserved). */
+  showPageContent() {
+    this.buildHeader()
+    this.refreshList()
+    this.buildFooter()
   },
 
   refreshRoutineName() {
@@ -161,9 +216,12 @@ Page({
     promptText({
       title: getText('name_input_title_routine'),
       text: this.routineName,
+      // The keyboard is drawn on its own layer: remove the page content so
+      // nothing shows through it.
+      onShow: () => this.hidePageContent(),
+      onHide: () => this.showPageContent(),
       onDone: (name) => {
         this.routineName = name
-        this.refreshRoutineName()
       },
       onCancel: () => {},
     })
@@ -350,8 +408,9 @@ Page({
     }
 
     // The list lives in a scroll layer that is always drawn above regular
-    // widgets, so it has to be removed while the picker overlay is open.
-    this.clearListWidgets()
+    // widgets, and the page widgets would show through the picker
+    // overlay, so the whole page is removed while it is open.
+    this.hidePageContent()
 
     this.minIdx = Math.min(59, Math.floor(seconds / 60))
     const secMod = seconds % 60
@@ -411,6 +470,9 @@ Page({
         promptText({
           title: getText('name_input_title_step'),
           text: this.pickerName,
+          // Hide the picker while the keyboard is open
+          onShow: () => this.setPickerVisible(false),
+          onHide: () => this.setPickerVisible(true),
           onDone: (name) => {
             this.pickerName = name
             this.pickerNameWidget.setProperty(
@@ -694,10 +756,19 @@ Page({
     )
   },
 
+  /** Shows/hides the picker overlay (used while a keyboard is open). */
+  setPickerVisible(visible) {
+    this.pickerWidgets.forEach((w) => {
+      try {
+        w.setProperty(prop.VISIBLE, visible)
+      } catch (e) {}
+    })
+  },
+
   closePicker() {
     this.clearPickerWidgets()
     this.pickerNameWidget = null
-    // Rebuild the list (scroll position is preserved)
-    this.refreshList()
+    // Rebuild the page (scroll position is preserved)
+    this.showPageContent()
   },
 })
