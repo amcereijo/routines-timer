@@ -127,7 +127,7 @@ export function openMiniKeyboard({ title, text, onDone, onCancel }) {
     createWidget(widget.BUTTON, {
       x: 30,
       y,
-      w: 120,
+      w: 108,
       h: KEY_H,
       radius: 10,
       text: 'SPACE',
@@ -140,13 +140,13 @@ export function openMiniKeyboard({ title, text, onDone, onCancel }) {
 
   add(
     createWidget(widget.BUTTON, {
-      x: 158,
+      x: 146,
       y,
       w: 76,
       h: KEY_H,
       radius: 10,
-      text: '⌫',
-      text_size: 24,
+      text: 'DEL',
+      text_size: 18,
       normal_color: COLOR_DARK_BTN,
       press_color: COLOR_DARK_BTN_PRESS,
       click_func: () => {
@@ -158,13 +158,13 @@ export function openMiniKeyboard({ title, text, onDone, onCancel }) {
 
   add(
     createWidget(widget.BUTTON, {
-      x: 242,
+      x: 230,
       y,
-      w: 96,
+      w: 108,
       h: KEY_H,
       radius: 10,
-      text: '✕',
-      text_size: 24,
+      text: 'CANCEL',
+      text_size: 18,
       normal_color: 0x330000,
       press_color: 0x550000,
       click_func: () => {
@@ -181,8 +181,8 @@ export function openMiniKeyboard({ title, text, onDone, onCancel }) {
       w: 104,
       h: KEY_H,
       radius: 10,
-      text: '✓',
-      text_size: 26,
+      text: 'OK',
+      text_size: 20,
       normal_color: COLOR_ACCENT,
       press_color: 0x0288d1,
       click_func: () => {

@@ -38,8 +38,8 @@ until all complete. You can pause/resume or stop at any time.
    - **+ Add Step** → in the step editor:
      - *(Optional)* tap the **step name row** to name it
        (default: "Step N").
-     - Pick a duration with the **min −/+** and **sec −/+** wheels, then `✓`
-       (`✕` cancels).
+     - Pick a duration with the **min −/+** and **sec −/+** wheels, then `OK`
+       (`CANCEL` cancels).
    - Repeat to add more steps (max 20). Tap a step row to edit it,
      `×` to delete it, `▲▼` to scroll when there are more than 2.
 2. **Run it now**: press **START**.
