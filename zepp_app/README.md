@@ -14,7 +14,7 @@ until all complete. You can pause/resume or stop at any time.
 │                  │      back       │  2 rows: name + duration │
 │  [+ New Routine] │                 │                          │
 └──────┬───────────┘                 │  [+ Add Step]            │
-       │ tap name / ▶ Start          │  [START]        [SAVE]   │
+       │ tap name / Start             │  [START]        [SAVE]   │
        │ Edit / ×                    └───────┬───────────┬──────┘
        ▼                                     │           │
 ┌──────────────────────────┐                 │           │ SAVE → back to HOME
@@ -49,7 +49,7 @@ until all complete. You can pause/resume or stop at any time.
    under its name (max 10; when full, the oldest is dropped; saving again with
    the same name overwrites the previous one).
 4. **Run a saved routine**: on **Home**, tap the routine name or its
-   **▶ Start** button.
+   **Start** button.
    - **Edit** loads the routine back into the editor (title shows
      "Edit Routine"); pressing **SAVE** updates it in place, keeping its
      position in the list. Leaving with the back gesture discards changes.

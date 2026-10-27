@@ -148,7 +148,7 @@ export function renderRoutineList(ctx, {
       w: 120,
       h: ACTIONS_H,
       radius: 20,
-      text: `▶ ${getText('saved_run')}`,
+      text: getText('saved_run'),
       text_size: 18,
       normal_color: COLOR_GREEN,
       press_color: 0x009624,
