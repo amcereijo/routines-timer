@@ -2,8 +2,9 @@
   "name": "zep-rutines-timer",
   "version": "1.0.0",
   "scripts": {
+    "prebuild": "node scripts/write-config.js",
     "build": "zeus build",
-    "preview": "zeus preview",
+    "preview": "node scripts/write-config.js && zeus preview",
     "postinstall": "sh scripts/postinstall.sh"
   },
   "keywords": [],
@@ -18,5 +19,8 @@
   "overrides": {
     "package-json": "6.5.0",
     "ora": "5.4.1"
+  },
+  "dependencies": {
+    "@zeppos/zml": "^0.0.43"
   }
 }

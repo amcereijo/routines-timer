@@ -2,7 +2,7 @@
   "configVersion": "v3",
   "app": {
     "appId": 1132936,
-    "appName": "Rutines Timer",
+    "appName": "Routines Timer",
     "appType": "app",
     "version": {
       "code": 1,
@@ -27,8 +27,12 @@
             "page/home",
             "page/create",
             "page/saved",
-            "page/run"
+            "page/run",
+            "page/import"
           ]
+        },
+        "app-side": {
+          "path": "app-side/index"
         }
       },
       "platforms": [
@@ -42,7 +46,7 @@
   },
   "i18n": {
     "en-US": {
-      "appName": "Rutines Timer"
+      "appName": "Routines Timer"
     }
   },
   "permissions": ["device:os.local_storage"],

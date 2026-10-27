@@ -4,13 +4,49 @@ msgstr ""
 "Language: en-US\n"
 
 msgid "appName"
-msgstr "Rutines Timer"
+msgstr "Routines Timer"
 
 msgid "home_title"
-msgstr "Rutines Timer"
+msgstr "Routines Timer"
 
 msgid "home_new_routine"
 msgstr "New Routine"
+
+msgid "home_import"
+msgstr "Import"
+
+msgid "import_title"
+msgstr "Import Routine"
+
+msgid "import_code_title"
+msgstr "Import code"
+
+msgid "import_tap_to_enter"
+msgstr "Tap to enter code"
+
+msgid "import_action"
+msgstr "Import"
+
+msgid "import_error_incomplete"
+msgstr "Enter 8 characters"
+
+msgid "import_error_code"
+msgstr "Invalid or expired code"
+
+msgid "import_error_phone"
+msgstr "Connect the Zepp app"
+
+msgid "import_error_network"
+msgstr "Connection failed"
+
+msgid "import_error_data"
+msgstr "Invalid routine data"
+
+msgid "import_loading"
+msgstr "Importing..."
+
+msgid "import_success"
+msgstr "Imported!"
 
 msgid "create_title"
 msgstr "New Routine"

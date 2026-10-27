@@ -154,6 +154,32 @@ npx zeus build        # produces dist/*.zab
 npx zeus preview      # QR / device prompts to run on simulator or watch
 ```
 
+### Build-time configuration (`RESOLVE_BASE_URL`)
+
+The routine-import feature calls the web app's `/api/routines/resolve` endpoint
+from the **app-side service** that runs in the Zepp phone app. Its base URL is
+injected at build time, so you can point a build at a different environment
+without editing source:
+
+```sh
+# one-off build against another environment
+RESOLVE_BASE_URL=https://staging.example.com npm run build
+
+# or keep it in a local .env file (see .env.example)
+cp .env.example .env
+```
+
+`npm run build` / `npm run preview` run `scripts/write-config.js` first
+(also wired as `prebuild`), which writes `utils/generatedConfig.js` from, in
+order of precedence:
+
+1. `RESOLVE_BASE_URL` from the environment
+2. `RESOLVE_BASE_URL` from `.env`
+3. the built-in default (the production deployment)
+
+Calling `npx zeus build` directly skips the generator and reuses the last
+generated `utils/generatedConfig.js`, so plain `zeus build` still works.
+
 ### Why a package fix is needed at all
 
 `@zeppos/zeus-cli@1.9.3` (the latest CLI) declares its dependency as

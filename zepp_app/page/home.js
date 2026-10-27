@@ -7,6 +7,8 @@ import {
   SAFE_WIDTH,
   SAFE_HEIGHT,
   COLOR_ACCENT,
+  COLOR_DARK_BTN,
+  COLOR_DARK_BTN_PRESS,
 } from '../utils/constants'
 import { getSavedRoutines } from '../utils/storage'
 import { renderRoutineList, clearWidgets } from '../utils/routineList'
@@ -40,11 +42,12 @@ Page({
     this.routines = getSavedRoutines()
     this.refreshList()
 
-    // Bottom bar: new routine (within safe area)
+    // Bottom bar: new routine + import (within safe area)
+    const barY = SAFE_MARGIN + SAFE_HEIGHT - 74
     createWidget(widget.BUTTON, {
       x: SAFE_MARGIN,
-      y: SAFE_MARGIN + SAFE_HEIGHT - 74,
-      w: SAFE_WIDTH,
+      y: barY,
+      w: 200,
       h: 64,
       radius: 32,
       text: `+ ${getText('home_new_routine')}`,
@@ -53,6 +56,20 @@ Page({
       press_color: 0x0288d1,
       click_func: () => {
         push({ url: 'page/create' })
+      },
+    })
+    createWidget(widget.BUTTON, {
+      x: SAFE_MARGIN + 212,
+      y: barY,
+      w: SAFE_WIDTH - 212,
+      h: 64,
+      radius: 32,
+      text: getText('home_import'),
+      text_size: 28,
+      normal_color: COLOR_DARK_BTN,
+      press_color: COLOR_DARK_BTN_PRESS,
+      click_func: () => {
+        push({ url: 'page/import' })
       },
     })
   },
