@@ -14,3 +14,8 @@ dist/
 
 # Zepp OS tooling cache
 .zepp/
+
+# Local env files (build-time configuration, not secrets)
+zepp_app/.env
+web/.env*
+!web/.env.example
