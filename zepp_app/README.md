@@ -1,4 +1,4 @@
-# Rutines Timer — Zepp OS app for Amazfit Balance
+# Routines Timer — Zepp OS app for Amazfit Balance
 
 Create sequences of timers ("routines"), run them immediately, or save them to
 run later. While a routine is running, each step counts down one after another

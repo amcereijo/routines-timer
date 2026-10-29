@@ -1,10 +1,10 @@
-# Privacy Policy — Rutines Timer
+# Privacy Policy — Routines Timer
 
 **Last updated: October 25, 2026**
 
 ## Overview
 
-Rutines Timer ("the App") is a Zepp OS mini program that allows you to create, save and run sequences of timers with pause/stop control.
+Routines Timer ("the App") is a Zepp OS mini program that allows you to create, save and run sequences of timers with pause/stop control.
 
 ## Data We Collect
 

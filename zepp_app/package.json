@@ -1,5 +1,5 @@
 {
-  "name": "zep-rutines-timer",
+  "name": "zep-routines-timer",
   "version": "1.0.0",
   "scripts": {
     "prebuild": "node scripts/write-config.js",
