@@ -15,7 +15,10 @@ dist/
 # Zepp OS tooling cache
 .zepp/
 
-# Local env files (build-time configuration, not secrets)
-zepp_app/.env
+# Local env files (secrets and machine-specific values).
+# The .env.example templates stay tracked so a fresh clone knows which
+# variables to create and where to get them.
+zepp_app/.env*
+!zepp_app/.env.example
 web/.env*
 !web/.env.example

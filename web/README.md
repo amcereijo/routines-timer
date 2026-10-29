@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Routines Timer — web app
 
-## Getting Started
+Next.js app for building routines and handing them to the watch with an
+8-character import code.
 
-First, run the development server:
+The watch app (`../zepp_app`) cannot reach the internet directly. It asks
+the Zepp phone app to proxy a request to
+`GET /api/routines/resolve?code=...`, which returns the routine stored
+here — or a generic 404 if the code is unknown, expired, malformed, or
+belongs to a deleted routine.
+
+## Requirements
+
+- Node.js 20+ (developed on Node 24)
+- A [Turso](https://turso.tech) database, or a local SQLite file
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local` is git-ignored. `.env.example` is the committed template —
+keep it in sync when adding a variable.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Required | Description |
+| --- | --- | --- |
+| `TURSO_DATABASE_URL` | yes | `file:./dev.db` locally, `libsql://<db>-<org>.turso.io` in production |
+| `TURSO_AUTH_TOKEN` | remote DB only | Token from the Turso dashboard → your database → Auth Tokens |
+| `ADMIN_PASSWORD` | yes | Password of the single operator allowed in |
+| `SESSION_SECRET` | yes | HMAC secret for session cookies — generate with `openssl rand -hex 32` |
 
-## Learn More
+The database schema (`routines`, `codes`, `rate_hits`) is created
+automatically on the first request, so an empty database is enough to
+start.
 
-To learn more about Next.js, take a look at the following resources:
+Sign in at `/login` with `ADMIN_PASSWORD`. Sessions last 12 h; rotating
+`SESSION_SECRET` invalidates every issued session at once.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploying
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deployed to Vercel. Set the four variables above in Project Settings →
+Environment Variables and deploy — no migration step, since the schema is
+created on first request.
 
-## Deploy on Vercel
+The deployed URL is what the watch app resolves codes against; point the
+watch build at it with `RESOLVE_BASE_URL` (see `../zepp_app/.env.example`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Layout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  page.tsx                  Routine list (post-login landing page)
+  login/page.tsx            Operator sign-in
+  routines/new/             Create a routine
+  routines/[id]/edit/       Edit a routine
+  api/routines/             CRUD
+  api/routines/[id]/codes/  Generate and list import codes
+  api/routines/resolve/     Public endpoint the watch calls
+  api/auth/                 Login / logout
+lib/
+  routine.ts                Shared document contract, limits, validation
+  store.ts                  Turso queries (routines, codes)
+  db.ts                     Client + automatic schema creation
+  session.ts                HMAC-signed session tokens
+  rateLimit.ts              Sliding-window counters
+proxy.ts                    Edge guard for pages and API routes
+```
+
+## Notes
+
+- `proxy.ts` is the Next.js 16 replacement for `middleware.ts`; it
+  redirects unauthenticated page requests to `/login` and rejects
+  unauthenticated API requests.
+- `GET /api/routines/resolve` is deliberately public — possession of an
+  active code is the credential. It is rate limited to 10 requests per
+  minute per IP; login is limited to 5 per 5 minutes.
+- `allowedDevOrigins` in `next.config.ts` allows the dev server to be
+  reached through a tunnel (`*.ngrok-free.dev`). It affects local
+  development only.

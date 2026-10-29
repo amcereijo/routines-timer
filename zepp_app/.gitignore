@@ -15,7 +15,8 @@ selenium-debug.log
 *.sln
 
 # Local build-time configuration (see .env.example)
-.env
+.env*
+!.env.example
 
 # Raw simulator screenshots (only store-ready ones in screenshots/store/ are committed)
 screenshots/zepp_screenshot_*.png

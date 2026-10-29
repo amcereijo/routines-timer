@@ -30,7 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — ignored, except the committed template.
+# `.env*` also matches `.env.example`, so it is re-included explicitly;
+# copy the template to `.env.local` for local development.
 .env*
 !.env.example
 
