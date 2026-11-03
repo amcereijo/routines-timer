@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveRateLimited } from '@/lib/rateLimit'
-import { isCodeFormat, ROUTINE_DOC_VERSION } from '@/lib/routine'
+import { isCodeFormat, ROUTINE_DOC_VERSION, stripStepExtras } from '@/lib/routine'
 import { getRoutine, resolveCode } from '@/lib/store'
 
 const NOT_FOUND = { error: 'not_found' }
@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     NextResponse.json({
       version: ROUTINE_DOC_VERSION,
       name: routine.name,
-      steps: routine.steps,
+      // The watch only understands the timing fields: the web-only extras
+      // (images, links) are stripped so the v1 document stays small.
+      steps: stripStepExtras(routine.steps),
     })
   )
 }

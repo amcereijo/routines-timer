@@ -1,5 +1,5 @@
-import RoutineEditor from "../RoutineEditor";
+import RoutineEditorLoader from "../RoutineEditorLoader";
 
 export default function NewRoutinePage() {
-  return <RoutineEditor mode="create" />;
+  return <RoutineEditorLoader mode="create" />;
 }

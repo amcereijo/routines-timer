@@ -1,13 +1,23 @@
 /**
- * Single-operator session: HMAC-SHA256 signed token of the form
- * `<expiryMs>.<hexSignature>`, carried in an HttpOnly cookie.
- * Built on Web Crypto so it runs in both Node routes and the edge proxy.
+ * Signed session tokens.
+ *
+ * Format: `<expiryMs>.<base64url(username)>.<hexSignature>`
+ *
+ * The signature is an HMAC-SHA256 over `<expiryMs>.<base64url(username)>`, so
+ * the username cannot be swapped without invalidating the token. Built on Web
+ * Crypto so it runs in both Node route handlers and the edge proxy.
  */
+
+import { decodeBase64Url, encodeBase64Url } from './base64'
 
 export const SESSION_COOKIE = 'rt_session'
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000 // 12 h
 
 const encoder = new TextEncoder()
+
+export interface SessionPayload {
+  username: string
+}
 
 async function hmacHex(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -41,23 +51,44 @@ export async function secretsEqual(a: string, b: string): Promise<boolean> {
   return safeEqual(ha, hb)
 }
 
-export async function createSessionToken(secret: string): Promise<string> {
+export async function createSessionToken(
+  secret: string,
+  username: string
+): Promise<string> {
   const expiry = String(Date.now() + SESSION_TTL_MS)
-  const signature = await hmacHex(secret, expiry)
-  return `${expiry}.${signature}`
+  const user = encodeBase64Url(username)
+  const signature = await hmacHex(secret, `${expiry}.${user}`)
+  return `${expiry}.${user}.${signature}`
 }
 
+/**
+ * Verify a session token and return its payload, or null when the token is
+ * missing, malformed, tampered with, or expired.
+ */
+export async function readSessionToken(
+  secret: string,
+  token: string | undefined
+): Promise<SessionPayload | null> {
+  if (!token) return null
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+  const [expiry, user, signature] = parts
+  if (!/^\d+$/.test(expiry)) return null
+  if (!/^[0-9a-f]{64}$/.test(signature)) return null
+  if (Number(expiry) <= Date.now()) return null
+
+  const expected = await hmacHex(secret, `${expiry}.${user}`)
+  if (!safeEqual(signature, expected)) return null
+
+  const username = decodeBase64Url(user)
+  if (!username) return null
+  return { username }
+}
+
+/** True when the token is a valid, unexpired session. */
 export async function verifySessionToken(
   secret: string,
   token: string | undefined
 ): Promise<boolean> {
-  if (!token) return false
-  const dot = token.indexOf('.')
-  if (dot <= 0) return false
-  const expiry = token.slice(0, dot)
-  const signature = token.slice(dot + 1)
-  if (!/^\d+$/.test(expiry) || !/^[0-9a-f]{64}$/.test(signature)) return false
-  if (Number(expiry) <= Date.now()) return false
-  const expected = await hmacHex(secret, expiry)
-  return safeEqual(signature, expected)
+  return (await readSessionToken(secret, token)) !== null
 }

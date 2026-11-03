@@ -5,6 +5,7 @@ let initPromise: Promise<Client> | null = null
 const DDL = `
 CREATE TABLE IF NOT EXISTS routines (
   id TEXT PRIMARY KEY,
+  owner TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL,
   steps TEXT NOT NULL,          -- JSON array of steps
   created_at INTEGER NOT NULL,
@@ -17,6 +18,14 @@ CREATE TABLE IF NOT EXISTS codes (
   expires_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_codes_routine ON codes(routine_id);
+CREATE TABLE IF NOT EXISTS shares (
+  token TEXT PRIMARY KEY,
+  routine_id TEXT NOT NULL,
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL    -- 0 = never expires
+);
+CREATE INDEX IF NOT EXISTS idx_shares_routine ON shares(routine_id);
 CREATE TABLE IF NOT EXISTS rate_hits (
   scope TEXT NOT NULL,
   client TEXT NOT NULL,
@@ -24,6 +33,23 @@ CREATE TABLE IF NOT EXISTS rate_hits (
 );
 CREATE INDEX IF NOT EXISTS idx_rate_hits ON rate_hits(scope, client, ts);
 `
+
+/**
+ * Columns added after the first release. `ALTER TABLE ... ADD COLUMN` is not
+ * idempotent in SQLite, so each statement is applied at most once and a
+ * "duplicate column" error is swallowed.
+ */
+const MIGRATIONS = [
+  'ALTER TABLE routines ADD COLUMN owner TEXT NOT NULL DEFAULT \'\'',
+]
+
+function isAlreadyApplied(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? error).toLowerCase()
+  return (
+    message.includes('duplicate column') ||
+    message.includes('already exists')
+  )
+}
 
 /**
  * Lazily created Turso/libSQL client with idempotent schema init.
@@ -45,7 +71,21 @@ export function getDb(): Promise<Client> {
       .map((s) => s.trim())
       .filter(Boolean)
       .map((sql) => ({ sql, args: [] }))
-    initPromise = client.batch(statements, 'write').then(() => client)
+    initPromise = client
+      .batch(statements, 'write')
+      .then(() => applyMigrations(client))
+      .then(() => client)
   }
   return initPromise
+}
+
+/** Apply additive migrations, ignoring columns that already exist. */
+async function applyMigrations(client: Client): Promise<void> {
+  for (const sql of MIGRATIONS) {
+    try {
+      await client.execute(sql)
+    } catch (error) {
+      if (!isAlreadyApplied(error)) throw error
+    }
+  }
 }
