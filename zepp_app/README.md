@@ -11,10 +11,11 @@ until all complete. You can pause/resume or stop at any time.
 │       HOME       │ ───────────────▶│          CREATE          │
 │  routine list    │                 │  Step list (tap = edit,  │
 │  (saved routines)│◀─────────────── │  × = delete, ▲▼ = scroll)│
-│                  │      back       │  2 rows: name + duration │
-│  [+ New Routine] │                 │                          │
-└──────┬───────────┘                 │  [+ Add Step]            │
-       │ tap name / Start             │  [START]        [SAVE]   │
+│  swipe to scroll │      back       │  2 rows: name + duration │
+│  [Start][Edit][×]│                 │                          │
+│ [+ New][Import]  │                 │  [+ Add Step]            │
+└──────┬───────────┘                 │  [START]        [SAVE]   │
+       │ tap name / Start             │                          │
        │ Edit / ×                    └───────┬───────────┬──────┘
        ▼                                     │           │
 ┌──────────────────────────┐                 │           │ SAVE → back to HOME
@@ -30,6 +31,11 @@ until all complete. You can pause/resume or stop at any time.
 
 > Note: `page/saved` still exists in the build targets but is no longer
 > linked from the UI — HOME shows the saved routines directly.
+
+> Note: the Home list is a scrollable area (`VIEW_CONTAINER`). Every routine
+> is a big card (name + summary + three large buttons) and the list is
+> swiped up/down to see the other routines. **+ New Routine** and **Import**
+> stay pinned at the bottom, so they are always one tap away.
 
 ## How to use (steps)
 
@@ -50,6 +56,8 @@ until all complete. You can pause/resume or stop at any time.
    the same name overwrites the previous one).
 4. **Run a saved routine**: on **Home**, tap the routine name or its
    **Start** button.
+   - The list shows two routines at a time; swipe up/down to reach the
+     others (the next routine peeks in at the bottom).
    - **Edit** loads the routine back into the editor (title shows
      "Edit Routine"); pressing **SAVE** updates it in place, keeping its
      position in the list. Leaving with the back gesture discards changes.
@@ -109,7 +117,8 @@ app.json                App configuration (targets, permissions, i18n)
 app.js                  App entry
 assets/balance.r/       Icon (per-target assets: <target>.<shape>)
 page/
-  home.js               Home: saved routines list + New Routine button
+  home.js               Home: scrollable saved-routines list + bottom bar
+                        (+ New Routine / Import)
   create.js             Routine name + create/edit steps, START / SAVE
   saved.js              Saved routines list (no longer linked from the UI)
   run.js                Countdown runner (pause/resume/stop)
@@ -118,7 +127,7 @@ utils/
   constants.js          Colors and limits
   format.js             m:ss formatting helpers
   storage.js            Saved-routine persistence
-  routineList.js        Shared saved-routine list widget renderer
+  routineList.js        Shared scrollable saved-routine list renderer
   textInput.js          Text input: system keyboard w/ mini-keyboard fallback
   keyboard.js           Built-in mini keyboard overlay (API 3.x devices)
   alerts.js             Vibration + sound feedback for step/routine end
@@ -128,6 +137,10 @@ utils/
 
 - Framework: plain `@zos/ui` widgets (TEXT / BUTTON / FILL_RECT), navigation
   with `@zos/router` (`push` with JSON params, `back`).
+- Long lists (saved routines, steps) live in a `VIEW_CONTAINER`
+  (`scroll_enable: 1`): the rows are children of the container and the
+  scroll offset is read from `scroll_complete_func` (`info.yoffset`) and
+  restored with `setProperty(prop.POS_Y, offset)` when the list is rebuilt.
 - Countdown: global `setInterval` (1 s) — the timer only ticks while not
   paused, so pause is trivially correct.
 - Screen-on during runs: `setPageBrightTime` + `pauseDropWristScreenOff`
