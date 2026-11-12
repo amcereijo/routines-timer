@@ -6,8 +6,6 @@ import {
   SAFE_WIDTH,
   SAFE_HEIGHT,
   COLOR_ACCENT,
-  COLOR_DARK_BTN,
-  COLOR_DARK_BTN_PRESS,
 } from '../utils/constants'
 import { getSavedRoutines } from '../utils/storage'
 import { renderRoutineList, clearRoutineList } from '../utils/routineList'
@@ -50,37 +48,25 @@ Page({
     this.routines = getSavedRoutines()
     this.refreshList()
 
-    // Bottom bar: new routine + import (always reachable, the list scrolls)
+    // Bottom bar: add routine (always reachable, the list scrolls)
     this.buildBottomBar()
   },
 
   buildBottomBar() {
+    // A routine can be built on the watch or in the web app: both live in
+    // the Add Routine section, so Home only needs one action.
     createWidget(widget.BUTTON, {
       x: SAFE_MARGIN,
       y: BAR_Y,
-      w: 190,
+      w: SAFE_WIDTH,
       h: BAR_H,
       radius: BAR_H / 2,
-      text: `+ ${getText('home_new_routine')}`,
+      text: `+ ${getText('home_add_routine')}`,
       text_size: 22,
       normal_color: COLOR_ACCENT,
       press_color: 0x0288d1,
       click_func: () => {
-        push({ url: 'page/create' })
-      },
-    })
-    createWidget(widget.BUTTON, {
-      x: SAFE_MARGIN + 198,
-      y: BAR_Y,
-      w: SAFE_WIDTH - 198,
-      h: BAR_H,
-      radius: BAR_H / 2,
-      text: getText('home_import'),
-      text_size: 22,
-      normal_color: COLOR_DARK_BTN,
-      press_color: COLOR_DARK_BTN_PRESS,
-      click_func: () => {
-        push({ url: 'page/import' })
+        push({ url: 'page/add' })
       },
     })
   },

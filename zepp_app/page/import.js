@@ -1,5 +1,5 @@
 import { createWidget, widget, align, prop, text_style } from '@zos/ui'
-import { back } from '@zos/router'
+import { replace } from '@zos/router'
 import { getText } from '@zos/i18n'
 import { BasePage } from '@zeppos/zml/base-page'
 import {
@@ -176,7 +176,8 @@ Page(
             // oldest-first eviction); imported routines are ordinary routines.
             addRoutine(parsed.name, parsed.steps)
             this.setStatus(getText('import_success'), COLOR_GREEN)
-            setTimeout(() => back(), 1200)
+            // The routine list shows the routine that was just imported.
+            setTimeout(() => replace({ url: 'page/home' }), 1200)
             return
           }
           if (status === 404) {

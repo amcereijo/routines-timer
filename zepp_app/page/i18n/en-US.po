@@ -9,11 +9,26 @@ msgstr "Routines Timer"
 msgid "home_title"
 msgstr "Routines Timer"
 
-msgid "home_new_routine"
-msgstr "New Routine"
+msgid "home_add_routine"
+msgstr "Add Routine"
 
-msgid "home_import"
-msgstr "Import"
+msgid "add_title"
+msgstr "Add Routine"
+
+msgid "add_watch_title"
+msgstr "On the watch"
+
+msgid "add_watch_hint"
+msgstr "Build it step by step here"
+
+msgid "add_web_title"
+msgstr "In the web app"
+
+msgid "add_web_hint"
+msgstr "Scan a code to build it online"
+
+msgid "add_hint"
+msgstr "Routines built in the web app come with an import code."
 
 msgid "import_title"
 msgstr "Import Routine"
@@ -69,23 +84,23 @@ msgstr "Routine name"
 msgid "create_add_step"
 msgstr "Add Step"
 
-msgid "web_entry_title"
-msgstr "Create on web"
-
-msgid "web_entry_hint"
-msgstr "Scan a code to build routines in the browser"
-
 msgid "web_title"
 msgstr "Create on Web"
 
 msgid "web_desc"
-msgstr "Scan with your phone to open the web app and create routines there. Then use the import code to add them to the watch."
+msgstr "Scan to build the routine in the web app, then enter its import code here."
 
-msgid "web_qr_unavailable"
-msgstr "QR code not supported on this watch. Open the address below on your phone."
+msgid "web_show_qr"
+msgstr "SHOW QR CODE"
+
+msgid "web_qr_title"
+msgstr "Scan to open the web app"
 
 msgid "web_back"
 msgstr "BACK"
+
+msgid "web_enter_code"
+msgstr "ENTER CODE"
 
 msgid "create_start"
 msgstr "START"

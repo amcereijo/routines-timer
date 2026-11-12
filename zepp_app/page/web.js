@@ -5,10 +5,9 @@ import {
   align,
   text_style,
 } from '@zos/ui'
-import { back } from '@zos/router'
+import { back, push } from '@zos/router'
 import { getText } from '@zos/i18n'
 import {
-  DEVICE_WIDTH,
   SAFE_MARGIN,
   SAFE_WIDTH,
   COLOR_TEXT,
@@ -21,26 +20,29 @@ import {
 
 // ---- Layout (safe drawing area: 70..410 on both axes) ----
 const TITLE_Y = SAFE_MARGIN // 70
-const TITLE_H = 24 // 70..94
-const DESC_Y = TITLE_Y + TITLE_H + 2 // 96
-const DESC_H = 58 // 96..154
-const QR_SIZE = 170
-const QR_X = Math.round((DEVICE_WIDTH - QR_SIZE) / 2) // 155
-const QR_Y = DESC_Y + DESC_H + 10 // 164
-const QR_BG_PAD = 8 // white margin around the code
-const URL_Y = QR_Y + QR_SIZE + 12 // 346
-const URL_H = 22 // 346..368
-const BTN_W = 130
-const BTN_H = 36
-const BTN_X = Math.round((DEVICE_WIDTH - BTN_W) / 2) // 175
-const BTN_Y = URL_Y + URL_H + 4 // 372 (372..408)
+const TITLE_H = 40 // 70..110
+const DESC_Y = TITLE_Y + TITLE_H + 6 // 116
+const DESC_H = 96 // 116..212
+const URL_Y = DESC_Y + DESC_H + 4 // 216
+const URL_H = 50 // 216..266
+const BTN_H = 48
+const BTN_RADIUS = BTN_H / 2
+// Row 1: the QR code, on its own screen
+const QR_BTN_Y = URL_Y + URL_H + 10 // 276 (276..324)
+// Row 2: the import step and back
+const BTN_ROW2_Y = QR_BTN_Y + BTN_H + 8 // 332 (332..380)
+const BTN_HALF_W = 165
+const BTN_GAP = 10
+const LEFT_BTN_X = SAFE_MARGIN // 70 (70..235)
+const RIGHT_BTN_X = SAFE_MARGIN + BTN_HALF_W + BTN_GAP // 245 (245..410)
 
 /**
  * Shows the address of the web routine builder so the user can open it on
  * another device (phone, computer) and build routines there.
  *
- * The screen shows the plain address, a QR code with the same address and a
- * short explanation of what the link is for.
+ * The screen shows the address and what it is for, plus the three actions
+ * of the flow: show the QR code (on its own screen), enter the import
+ * code of a routine built in the web app, and go back.
  */
 Page({
   onInit() {
@@ -65,7 +67,7 @@ Page({
         w: SAFE_WIDTH,
         h: TITLE_H,
         color: COLOR_TEXT,
-        text_size: 21,
+        text_size: 32,
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text_style: text_style.ELLIPSIS,
@@ -81,51 +83,13 @@ Page({
         w: SAFE_WIDTH,
         h: DESC_H,
         color: COLOR_SUBTEXT,
-        text_size: 15,
+        text_size: 24,
         align_h: align.CENTER_H,
-        align_v: align.CENTER_V,
+        align_v: align.TOP,
         text_style: text_style.WRAP,
         text: getText('web_desc'),
       })
     )
-
-    // QR code with the same address. Older firmware may not know the widget,
-    // in that case the address alone is shown.
-    let hasQr = true
-    try {
-      this.widgets.push(
-        createWidget(widget.QRCODE, {
-          content: WEB_BUILDER_URL,
-          x: QR_X,
-          y: QR_Y,
-          w: QR_SIZE,
-          h: QR_SIZE,
-          bg_x: QR_X - QR_BG_PAD,
-          bg_y: QR_Y - QR_BG_PAD,
-          bg_w: QR_SIZE + QR_BG_PAD * 2,
-          bg_h: QR_SIZE + QR_BG_PAD * 2,
-        })
-      )
-    } catch (e) {
-      console.log('QR code widget not available', e)
-      hasQr = false
-    }
-    if (!hasQr) {
-      this.widgets.push(
-        createWidget(widget.TEXT, {
-          x: SAFE_MARGIN,
-          y: QR_Y,
-          w: SAFE_WIDTH,
-          h: QR_SIZE,
-          color: COLOR_SUBTEXT,
-          text_size: 16,
-          align_h: align.CENTER_H,
-          align_v: align.CENTER_V,
-          text_style: text_style.WRAP,
-          text: getText('web_qr_unavailable'),
-        })
-      )
-    }
 
     // The address itself
     this.widgets.push(
@@ -135,24 +99,58 @@ Page({
         w: SAFE_WIDTH,
         h: URL_H,
         color: COLOR_ACCENT,
-        text_size: 13,
+        text_size: 18,
         align_h: align.CENTER_H,
-        align_v: align.CENTER_V,
+        align_v: align.TOP,
         text_style: text_style.WRAP,
         text: WEB_BUILDER_URL,
       })
     )
 
-    // Back to the routine editor
+    // The QR code, on its own screen
     this.widgets.push(
       createWidget(widget.BUTTON, {
-        x: BTN_X,
-        y: BTN_Y,
-        w: BTN_W,
+        x: SAFE_MARGIN,
+        y: QR_BTN_Y,
+        w: SAFE_WIDTH,
         h: BTN_H,
-        radius: BTN_H / 2,
+        radius: BTN_RADIUS,
+        text: getText('web_show_qr'),
+        text_size: 22,
+        normal_color: COLOR_ACCENT,
+        press_color: 0x0288d1,
+        click_func: () => push({ url: 'page/qr' }),
+      })
+    )
+
+    // The routine is built in the browser and comes back with an import
+    // code: the code is entered on the watch.
+    this.widgets.push(
+      createWidget(widget.BUTTON, {
+        x: LEFT_BTN_X,
+        y: BTN_ROW2_Y,
+        w: BTN_HALF_W,
+        h: BTN_H,
+        radius: BTN_RADIUS,
+        text: getText('web_enter_code'),
+        text_size: 22,
+        normal_color: 0x0d2637,
+        press_color: 0x14415c,
+        color: COLOR_ACCENT,
+        click_func: () => push({ url: 'page/import' }),
+      })
+    )
+
+    // Back to the Add Routine section
+    this.widgets.push(
+      createWidget(widget.BUTTON, {
+        x: RIGHT_BTN_X,
+        y: BTN_ROW2_Y,
+        w: BTN_HALF_W,
+        h: BTN_H,
+        radius: BTN_RADIUS,
         text: getText('web_back'),
-        text_size: 18,
+        text_size: 22,
         normal_color: COLOR_DARK_BTN,
         press_color: COLOR_DARK_BTN_PRESS,
         click_func: () => back(),

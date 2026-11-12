@@ -25,11 +25,13 @@
         "page": {
           "pages": [
             "page/home",
+            "page/add",
             "page/create",
             "page/saved",
             "page/run",
             "page/import",
-            "page/web"
+            "page/web",
+            "page/qr"
           ]
         },
         "app-side": {

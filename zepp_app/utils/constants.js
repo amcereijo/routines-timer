@@ -1,4 +1,5 @@
 import { RESOLVE_BASE_URL } from './generatedConfig'
+import { WEB_BUILDER_PATH } from './builder'
 
 export const DEVICE_WIDTH = 480
 export const DEVICE_HEIGHT = 480
@@ -34,7 +35,7 @@ export { RESOLVE_BASE_URL }
 // Address of the web routine builder: the page where routines are created
 // in the browser. The base URL may carry a trailing slash, so it is
 // trimmed before the path is appended.
-export const WEB_BUILDER_PATH = '/routines/new'
+export { WEB_BUILDER_PATH }
 export const WEB_BUILDER_URL =
   RESOLVE_BASE_URL.replace(/\/+$/, '') + WEB_BUILDER_PATH
 

@@ -7,32 +7,41 @@ until all complete. You can pause/resume or stop at any time.
 ## User flow
 
 ```
-┌──────────────────┐  + New Routine  ┌──────────────────────────┐
-│       HOME       │ ───────────────▶│          CREATE          │
-│  routine list    │                 │  Step list (tap = edit,  │
-│  (saved routines)│◀─────────────── │  × = delete, ▲▼ = scroll)│
-│  swipe to scroll │      back       │  2 rows: name + duration │
-│  [Start][Edit][×]│                 │                          │
-│ [+ New][Import]  │                 │  [Create on web]         │
-└──────┬───────────┘                 │  [+ Add Step]            │
-       │ tap name / Start            │  [START]        [SAVE]   │
-       │ Edit / ×                    └───────┬───────────┬──────┘
-       ▼                                     │           │
-┌──────────────────────────┐                 │           │ SAVE → back to HOME
-│           RUN            │◀────────────────┘           │
-│  Step n/N  next-step →   │   START                     │
-│  big countdown + bar     │◀────────────────────────────┘
-│  [PAUSE/RESUME] [STOP]   │
-└───────────┬──────────────┘
-            │ all steps done
-            ▼
-      "DONE!" → OK → back
+┌──────────────────┐  + Add Routine ┌──────────────────────────┐
+│       HOME       │ ──────────────▶│          ADD             │
+│  routine list    │                │  [On the watch]          │
+│  (saved routines)│◀────────────── │  [In the web app]        │
+│  swipe to scroll │      back      │  "web routines come back │
+│  [Start][Edit][×]│                │   with their import code"│
+│ [+ Add Routine]  │                └───────┬───────────┬──────┘
+└──────┬───────────┘                        │           │
+       │ tap name / Start                   │           │
+       │ Edit / ×                           │           │
+       ▼                                    ▼           ▼
+┌──────────────────────────┐   ┌───────────────────┐  ┌────────────────┐
+│           RUN            │◀──│      CREATE       │  │      WEB       │
+│  Step n/N  next-step →   │   │  Step list (tap = │  │  explanation   │
+│  big countdown + bar     │   │  edit, × = delete) │  │  + address     │
+│  [PAUSE/RESUME] [STOP]   │   │  [+ Add Step]     │  │  [SHOW QR CODE]│
+└───────────┬──────────────┘   │  [START]   [SAVE] │  │  [ENTER CODE]  │
+            │ all steps done   └───────────────────┘  │  [BACK]        │
+            ▼                                          └───────┬────────┘
+      "DONE!" → OK → back                                  [SHOW QR CODE]
+                                                               ▼
+                                                     ┌────────────────┐
+                                                     │   QR CODE      │
+                                                     │  (full screen) │
+                                                     │  [BACK]        │
+                                                     └────────────────┘
 
-┌──────────────────┐  Create on web ┌──────────────────────────┐
-│       CREATE      │ ──────────────▶│         WEB              │
-│  (submenu entry)  │◀────────────── │  URL + QR code           │
-└──────────────────┘     back        │  [BACK]                  │
-                                      └──────────────────────────┘
+┌──────────────────┐  ENTER CODE ┌───────────────────┐
+│       WEB        │ ────────────▶│      IMPORT       │
+│  (address screen)│              │  8-character code │
+└──────────────────┘              │  [IMPORT]         │
+                                  └─────────┬─────────┘
+                                            │ success
+                                            ▼
+                                    back to the HOME list
 ```
 
 > Note: `page/saved` still exists in the build targets but is no longer
@@ -40,13 +49,13 @@ until all complete. You can pause/resume or stop at any time.
 
 > Note: the Home list is a scrollable area (`VIEW_CONTAINER`). Every routine
 > is a big card (name + summary + three large buttons) and the list is
-> swiped up/down to see the other routines. **+ New Routine** and **Import**
-> stay pinned at the bottom, so they are always one tap away.
+> swiped up/down to see the other routines. **+ Add Routine** stays pinned at
+> the bottom, so it is always one tap away.
 
 ## How to use (steps)
 
 1. **Create a routine**
-   - Home → **+ New Routine**
+   - Home → **+ Add Routine** → **On the watch**
    - *(Optional)* tap the **routine name row** to give it a name
      (default: "Routine N" in the list).
    - **+ Add Step** → in the step editor:
@@ -56,16 +65,14 @@ until all complete. You can pause/resume or stop at any time.
        (`CANCEL` cancels).
    - Repeat to add more steps (max 20). Tap a step row to edit it,
      `×` to delete it, `▲▼` to scroll when there are more than 2.
-   - *(Optional)* tap **Create on web** (first entry of the step list) to see
-     the address of the web builder and its QR code — see
-     [Creating routines in the web](#creating-routines-in-the-web).
 2. **Create it in the web app instead**
-   - On the **New Routine** screen tap **Create on web** → the screen shows
-     the address of the web builder and a QR code.
+   - Home → **+ Add Routine** → **In the web app** → the screen shows the
+     address of the web builder and a QR code.
    - Scan the code with the phone, sign in and build the routine there.
-   - The web app gives the routine an **import code** → on the watch, tap
-     **Import** on Home and enter the code (the phone app must be
-     connected). The imported routine is an ordinary saved routine.
+   - The web app gives the routine an **import code** → back on the watch,
+     tap **ENTER CODE** and enter the code (the phone app must be
+     connected). The imported routine is an ordinary saved routine and the
+     watch goes back to the routine list, where it is already there.
 3. **Run it now**: press **START**.
 4. **Save it for later**: press **SAVE** → it appears on the **Home** list
    under its name (max 10; when full, the oldest is dropped; saving again with
@@ -99,14 +106,15 @@ until all complete. You can pause/resume or stop at any time.
 
 ### Creating routines in the web
 
-The **Create on web** entry (first row of the step list on the **New
-Routine** screen) opens a screen with the address of the web routine
-builder:
+The **In the web app** entry of the **Add Routine** section (Home → **+ Add
+Routine**) opens a screen with the address of the web routine builder:
 
 - a short explanation of what the link is for,
 - the address itself (`https://<web-app>/routines/new`),
-- a QR code with the same address, so the user can open the builder by
-  scanning it with the phone (the watch cannot open web pages itself).
+- **SHOW QR CODE**, which opens a screen with the QR code alone, as big as
+  the round screen allows, so it is easy to scan with the phone (the watch
+  cannot open web pages itself); **BACK** returns to the address,
+- **ENTER CODE**, which opens the import screen, and **BACK**.
 
 The address comes from the build-time `RESOLVE_BASE_URL` (see
 [Build-time configuration](#build-time-configuration-resolve_base_url)),
@@ -116,12 +124,9 @@ builder.
 
 The screen also explains how the routine gets back to the watch: a routine
 created in the web app comes with an **import code**, which is entered on
-the watch with **Home → Import**. That screen says where the codes come
-from, so both halves of the flow point at each other.
-
-The steps that were already added on the watch are kept: the routine is
-stored as a draft (`utils/draft.js`) before the screen is opened and
-restored when the user comes back.
+the watch with **ENTER CODE**. That screen says where the codes come from,
+so both halves of the flow point at each other. After a successful import
+the watch shows the routine list, with the imported routine in it.
 
 ### Naming text input
 
@@ -160,21 +165,22 @@ app.js                  App entry
 assets/balance.r/       Icon (per-target assets: <target>.<shape>)
 page/
   home.js               Home: scrollable saved-routines list + bottom bar
-                        (+ New Routine / Import)
+                        (+ Add Routine)
+  add.js                Add Routine section: on the watch / in the web app
   create.js             Routine name + create/edit steps, START / SAVE
-                        (+ Create on web entry)
   saved.js              Saved routines list (no longer linked from the UI)
   run.js                Countdown runner (pause/resume/stop)
   import.js             Import a routine with an 8-character code
-  web.js                Web builder address + QR code
+  web.js                Web builder address + explanation (+ SHOW QR CODE,
+                        ENTER CODE)
+  qr.js                 QR code of the web builder, drawn by the app
   i18n/                 en-US translations (.po)
 utils/
+  builder.js            Path of the routine builder in the web app
   constants.js          Colors and limits
   format.js             m:ss formatting helpers
   storage.js            Saved-routine persistence
   routineList.js        Shared scrollable saved-routine list renderer
-  draft.js              Draft of the routine being created (survives the
-                        trip to the web builder screen)
   textInput.js          Text input: system keyboard w/ mini-keyboard fallback
   keyboard.js           Built-in mini keyboard overlay (API 3.x devices)
   alerts.js             Vibration + sound feedback for step/routine end
@@ -196,11 +202,19 @@ utils/
   `@zos/sensor`, centralized in `utils/alerts.js` (patterns described above).
 - Page lifecycle: Zepp OS destroys the page on `push` and re-runs
   `onInit`+`build` on `back`, so each page always renders fresh state
-  (no stale saved lists). State that has to survive a navigation (the
-  routine being created while the web builder screen is open) is kept in
-  `utils/draft.js`.
-- QR code: `widget.QRCODE` (API_LEVEL 2.0+). The widget is created inside a
-  `try`/`catch`, so a device without the widget only shows the address.
+  (no stale saved lists). The routine list is rebuilt from storage, so a
+  routine imported on the previous screen shows up right away.
+- QR code: drawn by the app itself (`page/qr.js`), **not** with the
+  `widget.QRCODE` widget. The widget renders the code into a fixed-size
+  bitmap and crops it, so a 33-module code (this URL) loses its right-hand
+  column — the finder pattern never appears and the code cannot be
+  scanned. Instead the matrix is generated at build time from the
+  deployment URL (`scripts/write-config.js` → `utils/generatedQr.js`, one
+  character per module, `qrcode` package) and the page draws it with
+  filled rectangles: one per block of neighbouring dark modules, ~210
+  rectangles for a 33×33 code. 7px per module plus the 4-module quiet
+  zone keeps the whole code on a 287px white card inside the round
+  screen.
 
 ## Build & run
 
