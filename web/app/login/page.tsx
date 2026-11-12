@@ -8,6 +8,17 @@ interface PublicUser {
   name: string;
 }
 
+/**
+ * Path the user was heading to before being asked to sign in (the proxy
+ * keeps it in the `next` query parameter). Only same-site paths are
+ * accepted, so the parameter cannot be used to redirect somewhere else.
+ */
+function nextPath(): string {
+  if (typeof window === "undefined") return "/";
+  const next = new URLSearchParams(window.location.search).get("next") || "/";
+  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -49,7 +60,7 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
       if (res.ok) {
-        router.push("/");
+        router.push(nextPath());
         router.refresh();
       } else if (res.status === 429) {
         setError("Too many attempts. Try again later.");

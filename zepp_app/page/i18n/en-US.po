@@ -27,6 +27,9 @@ msgstr "Tap to enter code"
 msgid "import_action"
 msgstr "Import"
 
+msgid "import_hint"
+msgstr "Codes come from routines created in the web app."
+
 msgid "import_error_incomplete"
 msgstr "Enter 8 characters"
 
@@ -65,6 +68,24 @@ msgstr "Routine name"
 
 msgid "create_add_step"
 msgstr "Add Step"
+
+msgid "web_entry_title"
+msgstr "Create on web"
+
+msgid "web_entry_hint"
+msgstr "Scan a code to build routines in the browser"
+
+msgid "web_title"
+msgstr "Create on Web"
+
+msgid "web_desc"
+msgstr "Scan with your phone to open the web app and create routines there. Then use the import code to add them to the watch."
+
+msgid "web_qr_unavailable"
+msgstr "QR code not supported on this watch. Open the address below on your phone."
+
+msgid "web_back"
+msgstr "BACK"
 
 msgid "create_start"
 msgstr "START"

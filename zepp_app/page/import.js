@@ -1,4 +1,4 @@
-import { createWidget, widget, align, prop } from '@zos/ui'
+import { createWidget, widget, align, prop, text_style } from '@zos/ui'
 import { back } from '@zos/router'
 import { getText } from '@zos/i18n'
 import { BasePage } from '@zeppos/zml/base-page'
@@ -73,6 +73,20 @@ Page(
         align_h: align.CENTER_H,
         align_v: align.CENTER_V,
         text: '',
+      })
+
+      // Where the codes come from: routines created in the web app
+      createWidget(widget.TEXT, {
+        x: SAFE_MARGIN,
+        y: SAFE_MARGIN + 226,
+        w: SAFE_WIDTH,
+        h: 36,
+        color: COLOR_SUBTEXT,
+        text_size: 14,
+        align_h: align.CENTER_H,
+        align_v: align.CENTER_V,
+        text_style: text_style.WRAP,
+        text: getText('import_hint'),
       })
 
       // Import action (gated: needs exactly CODE_LENGTH chars)

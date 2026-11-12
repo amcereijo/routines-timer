@@ -39,7 +39,11 @@ export default async function proxy(req: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    return NextResponse.redirect(new URL('/login', req.url))
+    // Remember where the user was heading (e.g. the routine builder opened
+    // from the watch QR code) so the login can send them back there.
+    const login = new URL('/login', req.url)
+    login.searchParams.set('next', pathname)
+    return NextResponse.redirect(login)
   }
 
   return NextResponse.next()

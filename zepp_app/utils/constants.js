@@ -1,3 +1,5 @@
+import { RESOLVE_BASE_URL } from './generatedConfig'
+
 export const DEVICE_WIDTH = 480
 export const DEVICE_HEIGHT = 480
 
@@ -24,10 +26,19 @@ export const MAX_STEPS = 20
 export const MAX_SAVED = 10
 export const DEFAULT_REST_SECONDS = 10
 
-// ---- Routine import (web import codes) ----
+// ---- Web app ----
 // Base URL of the deployed web app: injected at build time via
 // RESOLVE_BASE_URL (see scripts/write-config.js). No trailing path.
-export { RESOLVE_BASE_URL } from './generatedConfig'
+export { RESOLVE_BASE_URL }
+
+// Address of the web routine builder: the page where routines are created
+// in the browser. The base URL may carry a trailing slash, so it is
+// trimmed before the path is appended.
+export const WEB_BUILDER_PATH = '/routines/new'
+export const WEB_BUILDER_URL =
+  RESOLVE_BASE_URL.replace(/\/+$/, '') + WEB_BUILDER_PATH
+
+// ---- Routine import (web import codes) ----
 // Import-code contract, mirrored from web/lib/routine.ts (design decision 5).
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789' // 30 chars, no 0/O/1/I/L/U
 export const CODE_LENGTH = 8

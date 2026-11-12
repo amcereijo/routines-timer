@@ -6,7 +6,7 @@ import {
   prop,
   text_style,
 } from '@zos/ui'
-import { back } from '@zos/router'
+import { back, push } from '@zos/router'
 import { getText } from '@zos/i18n'
 import {
   SAFE_MARGIN,
@@ -22,6 +22,7 @@ import {
 import { formatStepSummary } from '../utils/format'
 import { addRoutine } from '../utils/storage'
 import { promptText } from '../utils/textInput'
+import { saveDraft, takeDraft, clearDraft } from '../utils/draft'
 
 const MIN_VALUES = []
 for (let i = 0; i < 60; i++) MIN_VALUES.push(i)
@@ -40,29 +41,51 @@ const ROW_H = 54
 const ROW_GAP = 8
 const ADD_ROW_H = 46
 const DEL_W = 50
+// Menu entry that opens the web builder (shown while creating a routine)
+const WEB_ROW_H = 56
+const WEB_ROW_GAP = 8
 
 Page({
   onInit(params) {
     this.steps = []
     this.routineName = ''
     this.editId = null
-    try {
-      const data = typeof params === 'string' ? JSON.parse(params) : params
-      if (data && data.edit) {
-        // Editing an existing routine
-        this.routineName = data.edit.name || ''
-        this.editId = data.edit.id != null ? data.edit.id : null
-        if (Array.isArray(data.edit.steps)) {
-          // Deep copy so we never mutate the stored object before saving
-          this.steps = data.edit.steps.map((s) => ({
-            seconds: s.seconds,
-            name: s.name || '',
-            repeat: s.repeat || 1,
-            rest: s.rest != null ? s.rest : DEFAULT_REST_SECONDS,
-          }))
-        }
+    // Set when the page is left for the web builder, so the draft is kept.
+    this.leavingForWeb = false
+
+    // A draft survives the trip to the web builder screen (the page is
+    // destroyed while that screen is open), so it wins over the params.
+    const draft = takeDraft()
+    if (draft) {
+      this.routineName = draft.name || ''
+      this.editId = draft.editId != null ? draft.editId : null
+      if (Array.isArray(draft.steps)) {
+        this.steps = draft.steps.map((s) => ({
+          seconds: s.seconds,
+          name: s.name || '',
+          repeat: s.repeat || 1,
+          rest: s.rest != null ? s.rest : DEFAULT_REST_SECONDS,
+        }))
       }
-    } catch (e) {}
+    } else {
+      try {
+        const data = typeof params === 'string' ? JSON.parse(params) : params
+        if (data && data.edit) {
+          // Editing an existing routine
+          this.routineName = data.edit.name || ''
+          this.editId = data.edit.id != null ? data.edit.id : null
+          if (Array.isArray(data.edit.steps)) {
+            // Deep copy so we never mutate the stored object before saving
+            this.steps = data.edit.steps.map((s) => ({
+              seconds: s.seconds,
+              name: s.name || '',
+              repeat: s.repeat || 1,
+              rest: s.rest != null ? s.rest : DEFAULT_REST_SECONDS,
+            }))
+          }
+        }
+      } catch (e) {}
+    }
     this.headerWidgets = []
     this.footerWidgets = []
     this.listWidgets = []
@@ -85,6 +108,8 @@ Page({
     this.clearListWidgets()
     this.clearFooterWidgets()
     this.clearPickerWidgets()
+    // The draft is only kept while the web builder screen is open.
+    if (!this.leavingForWeb) clearDraft()
     this.steps = null
   },
 
@@ -190,6 +215,23 @@ Page({
   },
 
   /**
+   * Opens the screen that shows the address of the web routine builder.
+   *
+   * The page is destroyed while that screen is open, so the routine that is
+   * being created is stored as a draft and restored when the user comes
+   * back.
+   */
+  openWebBuilder() {
+    saveDraft({
+      name: this.routineName,
+      steps: this.steps,
+      editId: this.editId,
+    })
+    this.leavingForWeb = true
+    push({ url: 'page/web' })
+  },
+
+  /**
    * Removes every widget of the page. Used before showing a modal overlay
    * (picker or keyboard) so nothing of the page bleeds through it.
    */
@@ -276,13 +318,63 @@ Page({
     })
     this.listView = container
 
+    // The web builder is a submenu of "New Routine": it is only offered
+    // while a routine is being created, not while editing a saved one.
+    const showWebEntry = this.editId == null
+    const listOffset = showWebEntry ? WEB_ROW_H + WEB_ROW_GAP : 0
+
+    if (showWebEntry) {
+      // Row background: opens the web builder screen
+      const webBtn = container.createWidget(widget.BUTTON, {
+        x: 0,
+        y: 0,
+        w: SAFE_WIDTH,
+        h: WEB_ROW_H,
+        radius: 14,
+        normal_color: 0x0d2637,
+        press_color: 0x14415c,
+        click_func: () => this.openWebBuilder(),
+      })
+
+      // Line 1: what the entry does
+      const webTitle = container.createWidget(widget.TEXT, {
+        x: 14,
+        y: 4,
+        w: SAFE_WIDTH - 28,
+        h: 26,
+        color: COLOR_ACCENT,
+        text_size: 20,
+        align_h: align.LEFT,
+        align_v: align.CENTER_V,
+        text: getText('web_entry_title'),
+      })
+      webTitle.setEnable(false)
+
+      // Line 2: where it leads to
+      const webHint = container.createWidget(widget.TEXT, {
+        x: 14,
+        y: 28,
+        w: SAFE_WIDTH - 28,
+        h: 22,
+        color: COLOR_SUBTEXT,
+        text_size: 15,
+        align_h: align.LEFT,
+        align_v: align.CENTER_V,
+        text_style: text_style.ELLIPSIS,
+        text: getText('web_entry_hint'),
+      })
+      webHint.setEnable(false)
+
+      this.listWidgets.push(webBtn, webTitle, webHint)
+    }
+
     if (this.steps.length === 0) {
       // The "+ Add Step" button is the first item of the scroll, so the
       // hint has to go below it.
       this.listWidgets.push(
         container.createWidget(widget.TEXT, {
           x: 12,
-          y: ADD_ROW_H + 10,
+          y: listOffset + ADD_ROW_H + 10,
           w: SAFE_WIDTH - 24,
           h: 48,
           color: COLOR_SUBTEXT,
@@ -295,7 +387,7 @@ Page({
       )
     } else {
       this.steps.forEach((step, i) => {
-        const y = i * (ROW_H + ROW_GAP)
+        const y = listOffset + i * (ROW_H + ROW_GAP)
 
         // Row background: tap to edit the step
         const rowBtn = container.createWidget(widget.BUTTON, {
@@ -361,7 +453,7 @@ Page({
     }
 
     // Last element of the scroll: add another step
-    const addY = this.steps.length * (ROW_H + ROW_GAP)
+    const addY = listOffset + this.steps.length * (ROW_H + ROW_GAP)
     this.listWidgets.push(
       container.createWidget(widget.BUTTON, {
         x: 0,
