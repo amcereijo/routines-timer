@@ -7,11 +7,14 @@ Watch-side flow that lets the user enter an import code, fetch the routine throu
 
 ### Requirement: Import entry point
 
-The watch app's home screen SHALL offer an Import action, alongside the existing routine creation action, that opens an import page.
+The import page SHALL be opened from the web builder screen of the Add
+Routine section, next to the address of the web routine builder, so the
+user who just built a routine in the web app can enter its import code
+right away. The home screen MUST NOT offer a separate import action.
 
 #### Scenario: Open import page
 
-- **WHEN** the user activates the Import action on the home screen
+- **WHEN** the user activates the import action on the web builder screen
 - **THEN** the import page opens with an empty code entry field and the saved routines remain unchanged
 
 ### Requirement: Code entry
@@ -73,6 +76,16 @@ On successful validation the watch SHALL persist the routine using the same save
 
 - **WHEN** the user starts, edits, or deletes an imported routine
 - **THEN** each action behaves exactly as it does for a routine created on the watch
+
+### Requirement: The routine list is shown after an import
+
+After a successful import the watch SHALL show the routine list, so the
+imported routine is visible without further navigation.
+
+#### Scenario: The imported routine is visible right away
+
+- **WHEN** a code resolves to a valid routine document and the import succeeds
+- **THEN** the watch shows the routine list and the imported routine is in it
 
 ### Requirement: The screen states where the codes come from
 
