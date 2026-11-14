@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -7,6 +8,15 @@ interface PublicUser {
   username: string;
   name: string;
 }
+
+/**
+ * Where account requests go. Accounts are created by hand for now, so the
+ * login page points visitors at this address instead of a sign-up form.
+ */
+const REQUEST_ACCOUNT_MAILTO =
+  "mailto:amcereijo+routinestimer@gmail.com" +
+  "?subject=Routines%20Timer%20account%20request" +
+  "&body=Hi!%20I%20would%20like%20an%20account%20for%20the%20Routines%20Timer%20web%20builder.";
 
 /**
  * Path the user was heading to before being asked to sign in (the proxy
@@ -160,13 +170,23 @@ export default function LoginPage() {
               Pick your name from the list, or type it in.
             </p>
           )}
+
+          <div className="divider" />
+          <p className="muted">
+            No account yet? For now, accounts are created on personal request
+            only —{" "}
+            <a href={REQUEST_ACCOUNT_MAILTO}>send an email to request one</a>.
+          </p>
         </form>
       </div>
 
       <div className="card">
-        <p className="muted">Just sending one routine to your watch?</p>
+        <h2>Just sending one routine to your watch?</h2>
+        <p className="muted" style={{ margin: "5px 0 12px" }}>
+          Skip the sign-in and build a single routine — no account needed.
+        </p>
         <button
-          className="ghost"
+          className="cta"
           type="button"
           onClick={continueAsGuest}
           disabled={guestBusy}
@@ -175,10 +195,29 @@ export default function LoginPage() {
         </button>
         {guestError && <p className="error">{guestError}</p>}
         <p className="hint">
-          No account needed. The routine is temporary: it is deleted when you
-          leave the page and disappears after 24 hours. It can only be sent to
-          your watch with an import code.
+          The routine is temporary: it is deleted when you leave the page and
+          disappears after 24 hours. It can only be sent to your watch with an
+          import code.
         </p>
+      </div>
+
+      <div className="card app-promo">
+        <Image
+          className="app-promo-icon"
+          src="/watch-app-icon.png"
+          alt="Routines Timer watch app icon"
+          width={64}
+          height={64}
+        />
+        <div className="grow">
+          <h2>Routines Timer is also on your wrist</h2>
+          <p className="muted" style={{ marginTop: 5 }}>
+            The companion Zepp OS app for the Amazfit Balance runs your
+            routines on the watch — look for this icon. Anything you build
+            here comes back to the watch with an 8-character import code: in
+            the app, go to Add Routine → In the web app → Enter code.
+          </p>
+        </div>
       </div>
     </main>
   );

@@ -178,6 +178,24 @@ button.chip.active {
   background: var(--accent-soft);
 }
 
+/* Full-width secondary call to action (e.g. "Continue as guest"). */
+button.cta {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--accent);
+  border-color: var(--accent-dark);
+  background: var(--accent-soft);
+}
+
+button.cta:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(56, 189, 248, 0.2);
+}
+
 /* ----------------------------------------------------------------- inputs */
 
 input,
@@ -730,4 +748,19 @@ label.plain {
 
 .center {
   text-align: center;
+}
+
+/* ------------------------------------------------------- watch app promo */
+
+.app-promo {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.app-promo-icon {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
 }

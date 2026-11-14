@@ -7,6 +7,8 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/users',
   '/api/routines/resolve',
   '/guest',
+  // The watch app icon shown on the login page (served from public/).
+  '/watch-app-icon.png',
 ])
 
 /** Public share pages (`/r/<token>`) and the anonymous guest flow. */

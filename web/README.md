@@ -130,7 +130,9 @@ proxy.ts                    Edge guard for pages and API routes
 - `proxy.ts` is the Next.js 16 replacement for `middleware.ts`; it
   redirects unauthenticated page requests to `/login` and rejects
   unauthenticated API requests. `/login`, `/api/auth/login`,
-  `/api/auth/users`, `/api/routines/resolve` and `/r/*` are public.
+  `/api/auth/users`, `/api/routines/resolve`, `/r/*`, the guest flow
+  (`/guest`, `/api/guest/*`) and `/watch-app-icon.png` (the watch app icon
+  shown on the login page) are public.
 - `GET /api/routines/resolve` is deliberately public — possession of an
   active code is the credential. It is rate limited to 10 requests per
   minute per IP; login is limited to 5 per 5 minutes.
