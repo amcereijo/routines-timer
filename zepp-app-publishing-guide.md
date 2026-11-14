@@ -19,6 +19,7 @@
 ## 2. Preparar el paquete y assets
 
 - **Paquete ZAB**: Compila tu app con Zeus CLI (`zeus build`) generando el archivo `.zab`. El AppId dentro del paquete debe coincidir exactamente con el registrado.
+- **Versión**: El `version.code` de `app.json` debe ser **estrictamente mayor** que el de la versión ya publicada, y el `version.name` debe cambiar también. Si el código no aumenta, la consola rechaza el paquete con el error *"安装包版本过低"* (versión del paquete de instalación demasiado baja). Sube ambos valores antes de cada `zeus build`.
 - **Icono**: 240×240 px, PNG, fondo transparente, forma circular (sin márgenes alrededor del icono)
 - **Screenshots**: Mínimo 3 imágenes recomendadas de 360×360 px, PNG, fondo transparente:
   - **Pantallas redondas**: screenshot centrado sin márgenes
@@ -66,4 +67,5 @@ Completar información → Submit for Approval → Revisión (1-5 días) → Pub
 
 - El nombre de la app no puede estar ocupado por otra app tuya
 - El nombre de desarrollador mostrado es el nickname de tu cuenta (Account Center → Account Information → Nickname); se actualiza en la tienda tras pasar una revisión
-- Si la plataforma detecta nuevos dispositivos compatibles, adaptará y distribuirá tu Mini Program automáticamente
+- Antes de cada publicación, sube `version.code` y `version.name` en `zepp_app/app.json` y vuelve a ejecutar `npm run build`
+- La plataforma detecta nuevos dispositivos compatibles, adaptará y distribuirá tu Mini Program automáticamente
