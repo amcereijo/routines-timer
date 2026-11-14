@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import type { StoredRoutine } from "@/lib/store";
+import type { GuestSavedRoutine } from "./RoutineEditor";
 
 /**
  * The editor reads the unsaved draft from localStorage, so it only makes
@@ -20,6 +21,8 @@ const RoutineEditor = dynamic(() => import("./RoutineEditor"), {
 export default function RoutineEditorLoader(props: {
   mode: "create" | "edit";
   initial?: StoredRoutine;
+  guest?: boolean;
+  onSaved?: (routine: GuestSavedRoutine) => void;
 }) {
   return <RoutineEditor {...props} />;
 }

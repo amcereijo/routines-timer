@@ -16,6 +16,23 @@ import type { StoredRoutine } from "@/lib/store";
 interface Props {
   mode: "create" | "edit";
   initial?: StoredRoutine;
+  /**
+   * Guest mode: the routine is saved to the ephemeral guest API and the page
+   * stays open. No draft is kept on disk — the guest cannot recover
+   * anything once the page is left.
+   */
+  guest?: boolean;
+  /** Called with the saved routine (guest mode). */
+  onSaved?: (routine: GuestSavedRoutine) => void;
+}
+
+/** A routine saved by a guest (ephemeral, no owner). */
+export interface GuestSavedRoutine {
+  id: string;
+  name: string;
+  steps: RoutineStep[];
+  createdAt: number;
+  expiresAt: number;
 }
 
 interface StepForm {
@@ -143,13 +160,16 @@ function signature(name: string, steps: StepForm[]): string {
   });
 }
 
-export default function RoutineEditor({ mode, initial }: Props) {
+export default function RoutineEditor({ mode, initial, guest, onSaved }: Props) {
   const router = useRouter();
 
-  const draftKey = `rt_draft_${mode}_${initial?.id ?? "new"}`;
+  const draftKey = guest
+    ? "rt_guest_draft"
+    : `rt_draft_${mode}_${initial?.id ?? "new"}`;
   // The editor is client-only (see RoutineEditorLoader), so the draft can be
   // read while the first state is built — no flash, no hydration mismatch.
-  const [draft] = useState(() => loadDraft(draftKey, mode, initial));
+  // Guests keep no draft: their routine must not survive the page.
+  const [draft] = useState(() => (guest ? null : loadDraft(draftKey, mode, initial)));
 
   const [name, setName] = useState(
     () => draft?.name ?? initial?.name ?? ""
@@ -179,6 +199,8 @@ export default function RoutineEditor({ mode, initial }: Props) {
   // Autosave the draft so a refresh does not lose the work.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Guest routines are ephemeral on purpose: nothing is kept on disk.
+    if (guest) return;
     const timer = setTimeout(() => {
       try {
         if (signature(name, steps) === initialSignature) {
@@ -194,7 +216,7 @@ export default function RoutineEditor({ mode, initial }: Props) {
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, [name, steps, draftKey, initialSignature]);
+  }, [name, steps, draftKey, initialSignature, guest]);
 
   /* ---------------------------------------------------------------- helpers */
 
@@ -351,24 +373,37 @@ export default function RoutineEditor({ mode, initial }: Props) {
 
     setBusy(true);
     try {
-      const url = mode === "create" ? "/api/routines" : `/api/routines/${initial!.id}`;
+      // Guests save to the ephemeral guest API; the page stays open.
+      const url = guest
+        ? "/api/guest/routine"
+        : mode === "create"
+          ? "/api/routines"
+          : `/api/routines/${initial!.id}`;
+      const method = guest || mode === "create" ? "POST" : "PUT";
       const res = await fetch(url, {
-        method: mode === "create" ? "POST" : "PUT",
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        try {
-          window.localStorage.removeItem(draftKey);
-        } catch {
-          // ignore
+        if (guest) {
+          const data = await res.json().catch(() => null);
+          if (data?.routine) onSaved?.(data.routine);
+        } else {
+          try {
+            window.localStorage.removeItem(draftKey);
+          } catch {
+            // ignore
+          }
+          router.push("/");
+          router.refresh();
         }
-        router.push("/");
-        router.refresh();
       } else if (res.status === 400) {
         const data = await res.json();
         setErrors(data.errors ?? {});
         setFormError("Please fix the errors below.");
+      } else if (res.status === 429) {
+        setFormError("Too many requests. Try again later.");
       } else {
         setFormError("Save failed. Try again.");
       }
@@ -399,11 +434,17 @@ export default function RoutineEditor({ mode, initial }: Props) {
     <main>
       <div className="topbar">
         <div className="row">
-          <button className="ghost" onClick={() => router.push("/")}>
+          <button className="ghost" onClick={() => router.push(guest ? "/login" : "/")}>
             ← Back
           </button>
           <div>
-            <h1>{mode === "create" ? "New routine" : "Edit routine"}</h1>
+            <h1>
+              {guest
+                ? "Guest routine"
+                : mode === "create"
+                  ? "New routine"
+                  : "Edit routine"}
+            </h1>
             <p className="sub">
               {steps.length} step{steps.length === 1 ? "" : "s"} ·{" "}
               {formatDuration(totalSeconds)} total

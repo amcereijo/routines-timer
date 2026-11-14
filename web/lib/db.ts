@@ -13,11 +13,23 @@ CREATE TABLE IF NOT EXISTS routines (
 );
 CREATE TABLE IF NOT EXISTS codes (
   code TEXT PRIMARY KEY,
-  routine_id TEXT NOT NULL,
+  routine_id TEXT,              -- NULL for guest codes
+  guest_routine_id TEXT,        -- NULL for account codes
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  -- A code belongs to exactly one routine: an account routine or a guest one.
+  CHECK ((routine_id IS NULL) <> (guest_routine_id IS NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_codes_routine ON codes(routine_id);
+CREATE TABLE IF NOT EXISTS guest_routines (
+  id TEXT PRIMARY KEY,
+  workspace_token TEXT NOT NULL UNIQUE,  -- one routine per guest workspace
+  name TEXT NOT NULL,
+  steps TEXT NOT NULL,          -- JSON array of steps
   created_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_codes_routine ON codes(routine_id);
+CREATE INDEX IF NOT EXISTS idx_guest_routines_expires ON guest_routines(expires_at);
 CREATE TABLE IF NOT EXISTS shares (
   token TEXT PRIMARY KEY,
   routine_id TEXT NOT NULL,
@@ -88,4 +100,56 @@ async function applyMigrations(client: Client): Promise<void> {
       if (!isAlreadyApplied(error)) throw error
     }
   }
+  await migrateCodesForGuests(client)
+}
+
+/** True when the table already has the column. */
+async function hasColumn(
+  client: Client,
+  table: string,
+  column: string
+): Promise<boolean> {
+  const res = await client.execute(`PRAGMA table_info(${table})`)
+  return res.rows.some((row) => String(row.name) === column)
+}
+
+/**
+ * `codes` used to require `routine_id`; guest codes bind to
+ * `guest_routine_id` instead, so both columns are nullable and the table
+ * carries a "exactly one binding" check. SQLite cannot relax a NOT NULL
+ * constraint in place, so the table is rebuilt once (existing rows keep their
+ * account binding). The rebuild runs inside one write transaction.
+ */
+async function migrateCodesForGuests(client: Client): Promise<void> {
+  if (!(await hasColumn(client, 'codes', 'guest_routine_id'))) {
+    await client.batch(
+      [
+        {
+          sql: `CREATE TABLE codes_guest_migration (
+            code TEXT PRIMARY KEY,
+            routine_id TEXT,
+            guest_routine_id TEXT,
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL,
+            CHECK ((routine_id IS NULL) <> (guest_routine_id IS NULL))
+          )`,
+          args: [],
+        },
+        {
+          sql: 'INSERT INTO codes_guest_migration (code, routine_id, guest_routine_id, created_at, expires_at) SELECT code, routine_id, NULL, created_at, expires_at FROM codes',
+          args: [],
+        },
+        { sql: 'DROP TABLE codes', args: [] },
+        { sql: 'ALTER TABLE codes_guest_migration RENAME TO codes', args: [] },
+        { sql: 'CREATE INDEX IF NOT EXISTS idx_codes_routine ON codes(routine_id)', args: [] },
+      ],
+      'write'
+    )
+  }
+
+  // The guest index can only be created once the column exists, so it is
+  // part of the migration and not of the schema bootstrap.
+  await client.execute(
+    'CREATE INDEX IF NOT EXISTS idx_codes_guest_routine ON codes(guest_routine_id)'
+  )
 }

@@ -27,6 +27,8 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [mode, setMode] = useState<string>("users");
+  const [guestBusy, setGuestBusy] = useState(false);
+  const [guestError, setGuestError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +79,27 @@ export default function LoginPage() {
   }
 
   const singleUser = users.length === 1;
+
+  /** Start the anonymous, ephemeral guest flow (no account, no credentials). */
+  async function continueAsGuest() {
+    setGuestBusy(true);
+    setGuestError("");
+    try {
+      const res = await fetch("/api/guest/session", { method: "POST" });
+      if (res.ok) {
+        router.push("/guest");
+        router.refresh();
+      } else if (res.status === 429) {
+        setGuestError("Too many requests. Try again later.");
+      } else {
+        setGuestError("Could not start the guest session.");
+      }
+    } catch {
+      setGuestError("Could not start the guest session.");
+    } finally {
+      setGuestBusy(false);
+    }
+  }
 
   return (
     <main>
@@ -138,6 +161,24 @@ export default function LoginPage() {
             </p>
           )}
         </form>
+      </div>
+
+      <div className="card">
+        <p className="muted">Just sending one routine to your watch?</p>
+        <button
+          className="ghost"
+          type="button"
+          onClick={continueAsGuest}
+          disabled={guestBusy}
+        >
+          {guestBusy ? "Starting…" : "Continue as guest"}
+        </button>
+        {guestError && <p className="error">{guestError}</p>}
+        <p className="hint">
+          No account needed. The routine is temporary: it is deleted when you
+          leave the page and disappears after 24 hours. It can only be sent to
+          your watch with an import code.
+        </p>
       </div>
     </main>
   );

@@ -6,10 +6,11 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/login',
   '/api/auth/users',
   '/api/routines/resolve',
+  '/guest',
 ])
 
-/** Public share pages (`/r/<token>`). */
-const PUBLIC_PREFIXES = ['/r/']
+/** Public share pages (`/r/<token>`) and the anonymous guest flow. */
+const PUBLIC_PREFIXES = ['/r/', '/guest/', '/api/guest/']
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],

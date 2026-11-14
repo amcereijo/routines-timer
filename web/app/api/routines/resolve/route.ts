@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveRateLimited } from '@/lib/rateLimit'
 import { isCodeFormat, ROUTINE_DOC_VERSION, stripStepExtras } from '@/lib/routine'
-import { getRoutine, resolveCode } from '@/lib/store'
+import { getRoutineForCode, resolveCode } from '@/lib/store'
 
 const NOT_FOUND = { error: 'not_found' }
 
@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
     return noStore(NextResponse.json(NOT_FOUND, { status: 404 }))
   }
 
-  const routine = await getRoutine(record.routineId)
+  // The code may belong to an account routine or to a guest one.
+  const routine = await getRoutineForCode(record)
   if (!routine) {
     return noStore(NextResponse.json(NOT_FOUND, { status: 404 }))
   }

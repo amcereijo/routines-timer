@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { canAccessOwnedResource, getRequestUser } from '@/lib/auth'
+import { getGuestRoutineById } from '@/lib/guestStore'
 import { SHARE_TTL_PRESETS, ShareTtlKey } from '@/lib/routine'
 import { createShare, getRoutine, listShares } from '@/lib/store'
 import { shareUrl } from '@/lib/url'
@@ -9,6 +10,9 @@ type Ctx = { params: Promise<{ id: string }> }
 async function loadOwned(req: NextRequest, id: string) {
   const user = await getRequestUser(req)
   if (!user) return { user: null, routine: null, status: 401 }
+  // Guest routines are owner-less and ephemeral: they have no public page and
+  // are not visible to accounts, not even to administrators.
+  if (await getGuestRoutineById(id)) return { user, routine: null, status: 404 }
   const routine = await getRoutine(id)
   if (!routine) return { user, routine: null, status: 404 }
   if (!canAccessOwnedResource(user, routine.owner)) {

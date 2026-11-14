@@ -1,4 +1,5 @@
 import { getDb } from './db'
+import { getGuestRoutineById, pruneExpiredGuestData } from './guestStore'
 import {
   CODE_TTL_PRESETS,
   CodeTtlKey,
@@ -21,7 +22,10 @@ export interface StoredRoutine {
 
 export interface StoredCode {
   code: string
-  routineId: string
+  /** Account routine the code belongs to; null for guest codes. */
+  routineId: string | null
+  /** Guest routine the code belongs to; null for account codes. */
+  guestRoutineId: string | null
   createdAt: number
   expiresAt: number
 }
@@ -148,12 +152,13 @@ export async function createCode(
     const record: StoredCode = {
       code: generateCode(),
       routineId,
+      guestRoutineId: null,
       createdAt: Date.now(),
       expiresAt: Date.now() + ttlMs,
     }
     try {
       await db.execute({
-        sql: 'INSERT INTO codes (code, routine_id, created_at, expires_at) VALUES (?, ?, ?, ?)',
+        sql: 'INSERT INTO codes (code, routine_id, guest_routine_id, created_at, expires_at) VALUES (?, ?, NULL, ?, ?)',
         args: [record.code, routineId, record.createdAt, record.expiresAt],
       })
       return record
@@ -175,7 +180,10 @@ export async function listCodesForRoutine(routineId: string): Promise<StoredCode
   return res.rows.map(rowToCode)
 }
 
-/** Resolve a code to its record; null when unknown, expired, or orphaned. */
+/**
+ * Resolve a code to its record; null when unknown, expired, or orphaned.
+ * Guest codes resolve only while their guest routine is alive.
+ */
 export async function resolveCode(code: string): Promise<StoredCode | null> {
   const db = await getDb()
   const res = await db.execute({
@@ -185,14 +193,40 @@ export async function resolveCode(code: string): Promise<StoredCode | null> {
   if (!res.rows.length) return null
   const record = rowToCode(res.rows[0])
   if (record.expiresAt <= Date.now()) return null
+  if (record.guestRoutineId) {
+    // Guest routine deleted or expired: the code is unknown from now on.
+    const guest = await getGuestRoutineById(record.guestRoutineId)
+    if (!guest) return null
+    return record
+  }
+  if (!record.routineId) return null
   const routine = await getRoutine(record.routineId)
   if (!routine) return null // orphaned: routine deleted
   return record
 }
 
+/**
+ * The routine a resolved code points at (account or guest routine).
+ * Null when the routine is gone or expired.
+ */
+export async function getRoutineForCode(
+  record: StoredCode
+): Promise<{ name: string; steps: RoutineStep[] } | null> {
+  if (record.guestRoutineId) {
+    const guest = await getGuestRoutineById(record.guestRoutineId)
+    return guest ? { name: guest.name, steps: guest.steps } : null
+  }
+  if (!record.routineId) return null
+  const routine = await getRoutine(record.routineId)
+  return routine ? { name: routine.name, steps: routine.steps } : null
+}
+
 /** Lazy cleanup of expired grants (no TTL in SQL; done on activity). */
 async function pruneExpiredCodes(db: Awaited<ReturnType<typeof getDb>>) {
   await db.execute({ sql: 'DELETE FROM codes WHERE expires_at <= ?', args: [Date.now()] })
+  // Guest routines have their own lifetime: expired ones and their codes go
+  // away on the same path as the other expired grants.
+  await pruneExpiredGuestData(db)
 }
 
 // ------------------------------------------------------------------- shares
@@ -295,7 +329,14 @@ function rowToRoutine(row: Record<string, unknown>): StoredRoutine {
 function rowToCode(row: Record<string, unknown>): StoredCode {
   return {
     code: String(row.code),
-    routineId: String(row.routine_id),
+    routineId:
+      row.routine_id === null || row.routine_id === undefined
+        ? null
+        : String(row.routine_id),
+    guestRoutineId:
+      row.guest_routine_id === null || row.guest_routine_id === undefined
+        ? null
+        : String(row.guest_routine_id),
     createdAt: Number(row.created_at),
     expiresAt: Number(row.expires_at),
   }
