@@ -97,6 +97,35 @@ created on first request.
 The deployed URL is what the watch app resolves codes against; point the
 watch build at it with `RESOLVE_BASE_URL` (see `../zepp_app/.env.example`).
 
+## Analytics
+
+Vercel Web Analytics (`@vercel/analytics`) counts visitors and page views.
+The `<Analytics />` component sits in `app/layout.tsx`, so every page is
+tracked — the public share pages and the guest builder included.
+
+Two steps are needed beyond the code:
+
+1. Install the package and add the component:
+
+   ```bash
+   npm i @vercel/analytics
+   ```
+
+   ```tsx
+   // app/layout.tsx
+   import { Analytics } from "@vercel/analytics/next";
+   ```
+
+2. Enable Web Analytics for the project in the Vercel dashboard
+   (**Analytics** → the project → **Enable**), then deploy. Enabling it
+   adds the `/_vercel/insights/*` routes to the deployment.
+
+In development the script comes from `va.vercel-scripts.com` and only logs
+to the console — no data is sent to Vercel. The beacon it would post to
+(`/_vercel/insights/view`) is excluded from `proxy.ts`, so the auth guard
+never redirects it; without that, the script would fail to load on the
+public pages.
+
 ## Layout
 
 ```
@@ -132,7 +161,8 @@ proxy.ts                    Edge guard for pages and API routes
   unauthenticated API requests. `/login`, `/api/auth/login`,
   `/api/auth/users`, `/api/routines/resolve`, `/r/*`, the guest flow
   (`/guest`, `/api/guest/*`) and `/watch-app-icon.png` (the watch app icon
-  shown on the login page) are public.
+  shown on the login page) are public. `/_vercel/insights/*` is skipped
+  entirely so the analytics script and its beacons are never redirected.
 - `GET /api/routines/resolve` is deliberately public — possession of an
   active code is the credential. It is rate limited to 10 requests per
   minute per IP; login is limited to 5 per 5 minutes.

@@ -15,7 +15,11 @@ const PUBLIC_PATHS = new Set([
 const PUBLIC_PREFIXES = ['/r/', '/guest/', '/api/guest/']
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // `_vercel/insights` carries the Vercel Web Analytics script and the
+  // page-view beacons. They must reach the app untouched, otherwise the
+  // auth guard would redirect anonymous visitors to /login and the script
+  // would never load on the public pages.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|_vercel/insights).*)'],
 }
 
 function isPublic(pathname: string): boolean {
